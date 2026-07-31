@@ -60,6 +60,19 @@ ls -ld ~/storage/shared ~/storage/shared/Documents
 Grant Android file access, then reset/rerun phase 25. Some Android versions expose a settings
 screen instead of an inline dialog; return to Termux afterward.
 
+## Agnoster shows `u0_a…@localhost`
+
+Update the repository and reapply the shell/dotfile phases:
+
+```bash
+cd ~/bloody-writer
+bloody-writer update
+```
+
+Bloody Writer sets Agnoster's local-user baseline from Zsh's authoritative `$USERNAME` parameter,
+which matches Android's generated Termux account. After a successful update, fully close the
+Termux app and reopen it. Agnoster intentionally may still show context during an SSH login.
+
 ## Termux clipboard does not work
 
 Confirm the Termux:API Android app came from the same source as Termux, then:

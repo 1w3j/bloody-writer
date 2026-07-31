@@ -29,6 +29,11 @@ cd bloody-writer
 ./install.sh
 ```
 
+After the installer reports that **all phases completed successfully**, fully close the Termux app
+and reopen it once. A new Android process is required to display the installed Nerd Font/colors and
+start the new Zsh/Agnoster login shell consistently. The installer prints this instruction only
+after a complete successful run.
+
 Do not enter `proot-distro login archlinux` before running the script. Bloody Writer installs
 `proot-distro` as an optional companion, but manages the reliable Android integration from native
 Termux where `pkg`, Android storage, and Termux:API are available.

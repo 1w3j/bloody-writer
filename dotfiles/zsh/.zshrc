@@ -16,10 +16,11 @@ HIST_STAMPS="yyyy-mm-dd"
 DISABLE_MAGIC_FUNCTIONS=true
 zstyle ':omz:update' mode disabled
 
-source "$ZSH/oh-my-zsh.sh"
+# Agnoster compares against Zsh's special USERNAME parameter. Android's generated Termux account
+# name is not guaranteed to match the inherited USER environment variable.
+DEFAULT_USER="${USERNAME:-${USER:-$(id -un)}}"
 
-# Hide the local username and hostname from Agnoster.
-DEFAULT_USER="$USER"
+source "$ZSH/oh-my-zsh.sh"
 
 # Bloody-red Agnoster directory segment: ANSI red background, white text.
 prompt_dir() {
