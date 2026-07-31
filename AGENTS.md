@@ -2,9 +2,9 @@
 
 ## Purpose and scope
 
-Bloody Writer is a public, reproducible Arch Linux on WSL 2 terminal configuration. Preserve
-the true-black, blood-red, and warm-white design while keeping installation safe, resumable,
-portable, and understandable to a fresh WSL user.
+Bloody Writer is a public, reproducible terminal configuration for Arch Linux on Windows WSL 2
+and native Termux on Android. Preserve the true-black, blood-red, and warm-white design while
+keeping installation safe, resumable, portable, and understandable on both platforms.
 
 The current tracked configuration, `versions.env`, accepted documentation, and tests are the
 repository source of truth. Old chat transcripts and screenshots are historical context only.
@@ -24,10 +24,13 @@ repository source of truth. Old chat transcripts and screenshots are historical 
 
 ## Installer rules
 
-- Supported install target is official Arch Linux under WSL 2.
+- Supported install targets are official Arch Linux under Windows WSL 2 and the main native
+  Termux environment on Android. PRoot is an optional companion, not the installer target.
+- Platform detection must happen before mutation. WSL uses `pacman`/`sudo`; Termux uses `pkg`
+  and must reject root.
 - Every phase must be idempotent and must mark completion only after successful verification.
-- Any phase that needs WSL termination must persist state, stop cleanly, print exact PowerShell
-  commands, and resume when `./install.sh` is rerun.
+- Any phase that needs WSL termination, Windows Terminal reload, Android permission, or a
+  companion app must persist state, stop cleanly, print exact actions, and resume on rerun.
 - Back up an existing user file before replacing it or creating a managed symlink.
 - Validate destructive or move targets are inside the intended home directory.
 - Do not silently overwrite existing Codex, SSH, GitHub, or personal settings.
@@ -39,13 +42,15 @@ repository source of truth. Old chat transcripts and screenshots are historical 
 - Keep personal values in `~/.config/bloody-writer/settings.zsh`, never in tracked dotfiles.
 - Keep Neovim plugin commits in `lazy-lock.json`; never commit downloaded plugin/state/cache
   directories.
-- Keep Oh My Zsh and Codex pins in `versions.env`.
-- When changing the theme, inspect Zsh, tmux, Neovim, Windows Terminal, cheat sheets, and docs
-  for palette drift.
+- Keep Oh My Zsh, Codex, and Nerd Font pins in `versions.env`.
+- When changing the theme, inspect Zsh, tmux, Neovim, Windows Terminal, Termux properties,
+  logo/screenshots, cheat sheets, and docs for palette drift.
 - ANSI terminal green may intentionally map to red for visibility. Neovim semantic green may
   remain green; document this distinction.
-- Protect `Space ?`, the responsive cheat-sheet layout, WSL clipboard mappings, `Ctrl-q` Visual
-  Block, tmux `Ctrl-a`, and the `tma` multi-client session workflow.
+- Protect `Space ?`, the responsive cheat-sheet layout, platform clipboard mappings, `Ctrl-q`
+  Visual Block, tmux `Ctrl-a`, and the `tma` multi-client/confirmed-kill workflow.
+- Do not claim native Android Codex support or install an unofficial Android build; route Termux
+  users to the official WSL CLI through private SSH/tmux.
 
 ## Documentation requirements
 
@@ -55,6 +60,9 @@ dependency, security boundary, or troubleshooting workflow changes.
 
 New user-facing operations belong in both the relevant detailed guide and the compact cheat
 sheet when they are used repeatedly.
+
+Public screenshots require human pixel inspection for usernames, hostnames, private paths,
+repository names, tokens, fingerprints, and notifications; text-only secret scans are insufficient.
 
 ## Verification
 

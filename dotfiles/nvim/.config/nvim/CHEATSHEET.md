@@ -1,6 +1,6 @@
-# ✦ WRITER WORKSPACE — WSL QUICK REFERENCE
+# ✦ WRITER WORKSPACE — WSL / TERMUX QUICK REFERENCE
 
-> Neovim · Markdown · Zsh · tmux · Codex
+> Neovim · Markdown · Zsh · tmux · Codex in WSL / remote Codex from Termux on Android
 
 | CONTROL | KEY |
 | :--- | :--- |
@@ -54,12 +54,12 @@
 
 > Operators combine with motions: `d3w`, `y$`, `c}`.
 
-## ◆ WINDOWS CLIPBOARD
+## ◆ SYSTEM CLIPBOARD
 
 | KEY | ACTION |
 | :--- | :--- |
 | `Ctrl-c` | Copy line / visual selection |
-| `Ctrl-v` | Paste from Windows |
+| `Ctrl-v` | Paste from Windows or Android |
 | `Ctrl-q` | Visual Block (moved from Ctrl-v) |
 | `"+y` / `"+p` | Explicit system copy / paste |
 
@@ -81,7 +81,7 @@
 | `Space b d` | Close current buffer |
 | `:e file.md` | Open or create file |
 
-## ◆ WINDOWS & FILE TREE
+## ◆ EDITOR WINDOWS & FILE TREE
 
 | KEY | ACTION |
 | :--- | :--- |
@@ -171,7 +171,7 @@
 | `exit` or `Ctrl-d` | Close shell |
 | `:bd!` | Close terminal buffer |
 
-## ◆ ZSH / WSL TERMINAL
+## ◆ ZSH / TERMINAL
 
 | KEY | ACTION |
 | :--- | :--- |
@@ -193,7 +193,7 @@
 | `ls` / `ll` / `la` | List files |
 | `z name` | Jump to frequent folder |
 | `extract file` | Extract common archive |
-| `sudo` then `Esc Esc` | Add sudo to command |
+| `sudo` then `Esc Esc` | Add sudo to command (Windows WSL only) |
 
 ## ◆ TMUX — PREFIX IS CTRL-A
 
@@ -220,11 +220,14 @@
 | :--- | :--- |
 | `Ctrl-a [` | Enter copy mode |
 | `v` / `V` | Character / line selection |
-| `y` | Copy to Windows clipboard |
+| `y` | Copy to Windows or Android clipboard |
 | `q` | Leave copy mode |
 | Mouse drag | Select and copy |
 
 ## ◆ CODEX CLI — START & RESUME
+
+> Codex runs locally in Windows WSL. From Termux on Android, run `wsl-writer` and use Codex
+> inside the selected WSL tmux session.
 
 | COMMAND | ACTION |
 | :--- | :--- |
@@ -236,7 +239,7 @@
 | `codex resume --last` | Resume most recent |
 | `codex fork` | Fork a saved session |
 | `codex doctor` | Diagnose installation |
-| `codex update` | Update Codex CLI |
+| `bloody-writer reset-phase 60-codex` | Reapply the pinned Codex CLI release |
 | `codex --help` | Complete CLI help |
 
 ## ◆ CODEX — INSIDE A SESSION

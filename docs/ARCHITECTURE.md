@@ -1,75 +1,82 @@
 # Architecture and state model
 
+## Platform dispatch
+
+```text
+./install.sh
+    │
+    └── bin/bloody-writer
+            │
+            ├── detect WSL 2 + Arch ────── pacman / systemd / Windows host / local Codex
+            │
+            ├── detect native Termux ───── pkg / Android storage+API / remote WSL Codex
+            │
+            └── anything else ──────────── stop before mutation
+```
+
+Platform checks live in `scripts/lib/common.sh`; per-phase branches stay close to the operation
+they change. One ordered phase list and one state format are shared across both devices.
+
 ## Layer map
 
 ```text
-Windows host
-├── WSL 2 and Arch distribution
-├── Windows Terminal + Nerd Font (manual host layer)
-└── Android/Tailscale (optional remote client)
-
-Arch WSL
-├── pacman packages
-├── ~/.oh-my-zsh                    pinned external checkout
-├── ~/bloody-writer                 Git source of truth
-│   ├── dotfiles/
-│   ├── scripts/phases/
-│   ├── terminal/
-│   └── docs/
-├── ~/.zshrc                        symlink into repository
-├── ~/.tmux.conf                    symlink into repository
-├── ~/.config/nvim                  symlink into repository
-├── ~/.config/bloody-writer         personal, untracked settings
-├── ~/.local/state/bloody-writer    phase state and backups
-├── ~/.local/share/nvim             downloaded plugins/spell data
-├── ~/.codex                        credentials, sessions, CLI state
-└── ~/.ssh                          generated keys and host config
+Windows host                                   Android host
+├── Windows Terminal fragment + user font      ├── Termux app + API companion
+├── WSL 2 / Arch                               ├── Termux font/colors/storage
+│   ├── pacman workstation                     ├── pkg workstation
+│   ├── official Linux Codex                   ├── local tmux / Neovim / Git / SSH
+│   └── Tailscale SSH host ◄───────────────────┤ Tailscale client + wsl-writer
+│                                              └── optional proot-distro
+└──────────────────── shared Git source ────────────────────────┘
+                         ~/bloody-writer
 ```
+
+## Installed state
+
+| Path | Ownership | Meaning |
+|---|---|---|
+| `~/bloody-writer` | Git-tracked | Public source of truth |
+| `~/.zshrc`, `~/.tmux.conf`, `~/.config/nvim` | Managed symlinks | Active portable configuration |
+| `~/.config/bloody-writer` | Private/device-local | Paths, selected key, remote host/user |
+| `~/.local/state/bloody-writer/completed` | Installer state | Successful phase markers |
+| `~/.local/state/bloody-writer/manual` | Installer state | Pending host-owned instructions |
+| `~/.local/state/bloody-writer/backups` | Recovery | Conflicting originals and archives |
+| `~/.local/share/nvim` | Recreated cache/data | Architecture-specific plugins and spell assets |
+| `~/.codex` | WSL private state | Config, credentials, sessions, databases |
+| `~/.ssh` | Device private state | Generated keys and SSH configuration |
 
 ## Why symlinks
 
-The repository is the maintained configuration source. A `git pull` updates tracked dotfiles
-without maintaining a second copied snapshot. The installer still reapplies dependency and
-verification phases after an update.
-
-Personal settings are not symlinked into Git. `~/.config/bloody-writer/settings.zsh` stores
-local paths and the selected SSH key.
+A fast-forward pull updates the reviewed public configuration without maintaining a second copied
+snapshot. Private settings are regular untracked files, and generated/plugin state is rebuilt on
+each architecture.
 
 ## Phase transaction behavior
 
-A phase is marked complete only after its function returns successfully. This gives the
-installer three useful properties:
+A phase is marked complete only after returning success:
 
-1. A failed command cannot falsely advance the installation.
-2. Restart checkpoints remain pending until the next process verifies the new WSL state.
-3. Repeated execution skips completed work by default.
+1. A failed command cannot advance state.
+2. A WSL restart or host-app action leaves its phase pending.
+3. The checkpoint explains the external action in `status`.
+4. Rerunning verifies the condition and skips every complete phase.
+5. `reset-phase` deliberately removes one marker; `--force` deliberately ignores markers.
 
-There is no background daemon and no automatic Windows restart.
+There is no background installer daemon and no automatic Windows/Android restart.
 
 ## Update flow
 
 ```text
 bloody-writer update
         │
-        ├── require a clean Bloody Writer checkout
+        ├── reject a dirty source checkout
         ├── git pull --ff-only
-        ├── clear dependency/config verification markers
-        └── run the normal installer
+        ├── clear affected package/theme/config/verification markers
+        └── invoke the same platform-aware installer
 ```
 
-Fast-forward-only pulls prevent an update command from manufacturing merge commits or
-overwriting local edits.
+## Version boundaries
 
-## Versioning
-
-`versions.env` pins:
-
-- The Bloody Writer release version.
-- Oh My Zsh commit.
-- Codex CLI release.
-
-`lazy-lock.json` pins Neovim plugin commits. Arch and global npm dependencies follow their
-current package repositories and are recorded by name under `manifests/`. The versions observed
-when this snapshot was curated are recorded in `docs/SNAPSHOT.md`; pinning rolling system
-package files without maintaining a package archive would produce a false promise of
-reproducibility.
+`versions.env` pins the Bloody Writer version, Oh My Zsh commit, Codex release, and Nerd Font
+release/checksum. `lazy-lock.json` pins Neovim plugins. Arch, Termux, and npm package manifests
+track names while their rolling repositories supply current versions. `docs/SNAPSHOT.md` records
+observed versions; the project does not pretend to own a historical package archive.

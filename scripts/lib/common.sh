@@ -72,8 +72,23 @@ bw_confirm() {
   [[ $answer == [Yy] || $answer == [Yy][Ee][Ss] ]]
 }
 
+bw_confirm_manual() {
+  local prompt="$1"
+  if [[ ! -t 0 ]]; then
+    bw_warn "$prompt Confirmation must be entered interactively."
+    return 1
+  fi
+  local answer
+  read -r -p "$prompt [y/N] " answer
+  [[ $answer == [Yy] || $answer == [Yy][Ee][Ss] ]]
+}
+
 bw_have() {
   command -v "$1" >/dev/null 2>&1
+}
+
+bw_is_termux() {
+  [[ ${PREFIX:-${TERMUX__PREFIX:-}} == */com.termux/files/usr ]]
 }
 
 bw_is_wsl() {
@@ -87,8 +102,76 @@ bw_is_arch() {
   [[ ${ID:-} == arch ]]
 }
 
+bw_detect_platform() {
+  if bw_is_termux; then
+    printf 'termux\n'
+  elif bw_is_wsl; then
+    printf 'wsl\n'
+  else
+    printf 'unsupported\n'
+  fi
+}
+
+BW_PLATFORM="${BW_PLATFORM:-$(bw_detect_platform)}"
+export BW_PLATFORM
+
+bw_platform_label() {
+  case "$BW_PLATFORM" in
+  wsl) printf 'Arch Linux on Windows WSL 2\n' ;;
+  termux) printf 'Termux on Android\n' ;;
+  *) printf 'unsupported platform\n' ;;
+  esac
+}
+
+bw_banner() {
+  printf '%s' "$BW_RED"
+  cat <<'EOF'
+               ╱╲
+              ╱  ╲
+             ╱  ▸ ╲
+            ╱   │  ╲
+           ╱____◆___╲
+EOF
+  printf '         %sBLOODY WRITER%s\n' "$BW_RED" "$BW_RESET"
+  printf '%s     write boldly. resume safely.%s\n\n' "$BW_DIM" "$BW_RESET"
+}
+
 bw_ensure_dirs() {
-  bw_run mkdir -p "$BW_STATE_DIR/completed" "$BW_CONFIG_DIR" "$BW_CACHE_DIR" "$BW_STATE_DIR/backups"
+  bw_run mkdir -p \
+    "$BW_STATE_DIR/completed" \
+    "$BW_STATE_DIR/manual" \
+    "$BW_CONFIG_DIR" \
+    "$BW_CACHE_DIR" \
+    "$BW_STATE_DIR/backups"
+}
+
+bw_manual_marker() {
+  local checkpoint="$1"
+  [[ $checkpoint =~ ^[a-z0-9][a-z0-9-]*$ ]] || bw_die "Invalid checkpoint: $checkpoint"
+  printf '%s/manual/%s\n' "$BW_STATE_DIR" "$checkpoint"
+}
+
+bw_manual_pending() {
+  [[ -f $(bw_manual_marker "$1") ]]
+}
+
+bw_mark_manual_pending() {
+  local checkpoint="$1"
+  local message="$2"
+  local marker
+  marker="$(bw_manual_marker "$checkpoint")"
+  if [[ $BW_DRY_RUN == 1 ]]; then
+    bw_note "Would pause at manual checkpoint: $checkpoint"
+    return 0
+  fi
+  printf '%s\n' "$message" >"$marker"
+}
+
+bw_clear_manual() {
+  local marker
+  marker="$(bw_manual_marker "$1")"
+  [[ -e $marker ]] || return 0
+  bw_run rm -- "$marker"
 }
 
 bw_phase_marker() {
@@ -110,6 +193,7 @@ bw_mark_phase() {
   {
     printf 'completed_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     printf 'version=%s\n' "$BLOODY_WRITER_VERSION"
+    printf 'platform=%s\n' "$BW_PLATFORM"
     if git -C "$BW_REPO_ROOT" rev-parse HEAD >/dev/null 2>&1; then
       printf 'commit=%s\n' "$(git -C "$BW_REPO_ROOT" rev-parse HEAD)"
     fi

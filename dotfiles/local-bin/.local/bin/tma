@@ -1,37 +1,201 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if ! command -v tmux >/dev/null 2>&1; then
-  printf 'tmux is not installed on this machine.\n' >&2
-  exit 1
-fi
+tma_usage() {
+  cat <<'EOF'
+tma — choose, attach, create, or safely kill a tmux session
 
-if ! tmux has-session 2>/dev/null; then
-  printf 'No tmux sessions exist yet.\n'
-  read -r -p 'Name for a new session [main]: ' session_name
-  session_name=${session_name:-main}
+Usage:
+  tma                    Open the interactive session picker.
+  tma --list             Print every available session.
+  tma --kill SESSION     Ask once, then kill exactly SESSION.
+  tma --help             Show this guide.
+
+Picker keys:
+  Enter                  Attach the selected session as another tmux client.
+  Ctrl-X                 Ask for confirmation, then kill the selected session.
+  Esc                    Close the picker without changing anything.
+
+Fallback menu (when fzf is unavailable):
+  NUMBER                 Attach that numbered session.
+  k NUMBER               Ask for confirmation, then kill that session.
+  n NAME                 Create a new named session.
+  q                      Quit.
+
+Examples:
+  tma
+  tma --list
+  tma --kill writer
+
+This works locally in Windows WSL, locally in Termux on Android, and after SSH from
+Termux on Android into WSL. Attaching never disconnects an existing tmux client.
+EOF
+}
+
+need_tmux() {
+  command -v tmux >/dev/null 2>&1 || {
+    printf 'tma: tmux is not installed on this machine.\n' >&2
+    exit 1
+  }
+}
+
+list_sessions() {
+  tmux list-sessions \
+    -F '#{session_name}\t#{session_windows} window(s)\t#{?session_attached,attached,detached}\tcreated #{t:session_created}' \
+    2>/dev/null || true
+}
+
+session_exists() {
+  tmux has-session -t "=$1" 2>/dev/null
+}
+
+kill_session() {
+  local session_name="$1"
+  [[ -n $session_name ]] || {
+    printf 'tma: --kill requires a session name.\n' >&2
+    return 2
+  }
+  session_exists "$session_name" || {
+    printf 'tma: no tmux session named %s exists.\n' "$session_name" >&2
+    return 1
+  }
+
+  printf 'Kill tmux session "%s" and every process running inside it? [y/N] ' "$session_name" >&2
+  local answer=""
+  IFS= read -r -n 1 answer || true
+  printf '\n' >&2
+  if [[ $answer != [Yy] ]]; then
+    printf 'Kept tmux session "%s".\n' "$session_name"
+    return 0
+  fi
+
+  tmux kill-session -t "=$session_name"
+  printf 'Killed tmux session "%s".\n' "$session_name"
+}
+
+create_session() {
+  local session_name="$1"
+  [[ $session_name =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || {
+    printf 'Use letters, digits, underscores, or hyphens; start with a letter or digit.\n' >&2
+    return 1
+  }
   exec tmux new-session -s "$session_name"
-fi
+}
 
-session_lines=$(tmux list-sessions -F '#{session_name}	#{session_windows} window(s)	#{?session_attached,attached,detached}	created #{t:session_created}')
+attach_session() {
+  local session_name="$1"
+  session_exists "$session_name" || {
+    printf 'tma: session disappeared before it could be attached: %s\n' "$session_name" >&2
+    return 1
+  }
+  if [[ -n ${TMUX:-} ]]; then
+    exec tmux switch-client -t "=$session_name"
+  fi
+  exec tmux attach-session -t "=$session_name"
+}
+
+case "${1:-}" in
+-h | --help)
+  tma_usage
+  exit 0
+  ;;
+--list)
+  need_tmux
+  list_sessions
+  exit 0
+  ;;
+--kill)
+  need_tmux
+  (($# == 2)) || {
+    printf 'tma: --kill requires exactly one session name.\n' >&2
+    exit 2
+  }
+  kill_session "$2"
+  exit $?
+  ;;
+"") ;;
+*)
+  printf 'tma: unknown option: %s\n\n' "$1" >&2
+  tma_usage >&2
+  exit 2
+  ;;
+esac
+
+need_tmux
+
+if [[ -z $(list_sessions) ]]; then
+  if [[ ! -t 0 || ! -t 1 ]]; then
+    printf 'No tmux sessions exist yet. Run tma in an interactive terminal to create one.\n'
+    exit 0
+  fi
+  read -r -p 'No sessions exist. Name for a new session [writer]: ' session_name
+  create_session "${session_name:-writer}"
+fi
 
 if command -v fzf >/dev/null 2>&1 && [[ -t 0 && -t 1 ]]; then
-  selection=$(printf '%s\n' "$session_lines" \
-    | fzf --height=60% --reverse --border \
-      --prompt='Attach tmux session > ' \
-      --header='Enter: attach   Esc: cancel' \
-      --delimiter=$'\t' --with-nth=1,2,3,4) || exit 0
-  session_name=${selection%%$'\t'*}
-else
-  printf 'Available tmux sessions:\n'
-  select session_name in $(tmux list-sessions -F '#{session_name}'); do
-    [[ -n ${session_name:-} ]] && break
-    printf 'Choose a number from the list.\n' >&2
-  done
+  self="$(readlink -f -- "${BASH_SOURCE[0]}")"
+  printf -v self_quoted '%q' "$self"
+  selection="$(
+    list_sessions |
+      fzf --height=65% --reverse --border \
+        --prompt='tmux session > ' \
+        --header='Enter attach  •  Ctrl-X kill (confirmation required)  •  Esc cancel' \
+        --delimiter=$'\t' --with-nth=1,2,3,4 \
+        --bind="ctrl-x:execute($self_quoted --kill {1})+reload($self_quoted --list)"
+  )" || exit 0
+  attach_session "${selection%%$'\t'*}"
 fi
 
-if [[ -n ${TMUX:-} ]]; then
-  exec tmux switch-client -t "$session_name"
-else
-  exec tmux attach-session -t "$session_name"
+if [[ ! -t 0 || ! -t 1 ]]; then
+  printf 'Available tmux sessions:\n'
+  list_sessions
+  printf '\nRun tma in an interactive terminal to attach or kill a session.\n'
+  exit 0
 fi
+
+while true; do
+  mapfile -t session_names < <(tmux list-sessions -F '#{session_name}' 2>/dev/null || true)
+  ((${#session_names[@]})) || {
+    read -r -p 'No sessions remain. Enter n NAME to create one, or q to quit: ' action value
+    [[ $action == q ]] && exit 0
+    [[ $action == n && -n ${value:-} ]] && create_session "$value"
+    continue
+  }
+
+  printf '\nAvailable tmux sessions:\n'
+  for index in "${!session_names[@]}"; do
+    printf '  %d) %s\n' "$((index + 1))" "${session_names[$index]}"
+  done
+  printf '\nEnter NUMBER to attach, k NUMBER to kill, n NAME to create, or q to quit.\n'
+  read -r -p '> ' action value
+  case "$action" in
+  q) exit 0 ;;
+  n)
+    [[ -n ${value:-} ]] && create_session "$value"
+    ;;
+  k)
+    [[ ${value:-} =~ ^[1-9][0-9]*$ ]] || {
+      printf 'Choose k followed by a listed number.\n' >&2
+      continue
+    }
+    selected_index=$((value - 1))
+    [[ -n ${session_names[$selected_index]:-} ]] || {
+      printf 'That session number is not in the list.\n' >&2
+      continue
+    }
+    kill_session "${session_names[$selected_index]}"
+    ;;
+  *)
+    [[ $action =~ ^[1-9][0-9]*$ ]] || {
+      printf 'Choose a listed number, k NUMBER, n NAME, or q.\n' >&2
+      continue
+    }
+    selected_index=$((action - 1))
+    [[ -n ${session_names[$selected_index]:-} ]] || {
+      printf 'That session number is not in the list.\n' >&2
+      continue
+    }
+    attach_session "${session_names[$selected_index]}"
+    ;;
+  esac
+done

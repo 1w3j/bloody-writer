@@ -23,10 +23,19 @@ phase_30_shell() {
     bw_run git -C "$omz" checkout --detach "$OH_MY_ZSH_COMMIT"
   fi
 
-  local current_shell
-  current_shell="$(getent passwd "$USER" | cut -d: -f7)"
-  if [[ $current_shell != /usr/bin/zsh ]]; then
-    bw_log "Setting Zsh as the login shell."
-    bw_run sudo usermod --shell /usr/bin/zsh "$USER"
+  local current_shell zsh_path
+  zsh_path="$(command -v zsh)"
+  if [[ $BW_PLATFORM == termux ]]; then
+    current_shell="${SHELL:-}"
+    if [[ $current_shell != "$zsh_path" ]]; then
+      bw_log "Setting Zsh as the Termux login shell."
+      bw_run chsh -s "$zsh_path"
+    fi
+  else
+    current_shell="$(getent passwd "${USER:-$(id -un)}" | cut -d: -f7)"
+    if [[ $current_shell != "$zsh_path" ]]; then
+      bw_log "Setting Zsh as the WSL login shell."
+      bw_run sudo usermod --shell "$zsh_path" "${USER:-$(id -un)}"
+    fi
   fi
 }

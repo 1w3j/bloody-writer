@@ -3,6 +3,12 @@
 phase_60_codex() {
   [[ $BW_TEST_MODE == 1 ]] && return 0
 
+  if [[ $BW_PLATFORM == termux ]]; then
+    bw_warn "OpenAI does not publish a native Android Codex CLI build. Bloody Writer will not install an unofficial binary."
+    bw_note "Use the supported Codex installation in Windows WSL from Termux on Android: run 'bloody-writer remote'."
+    return 0
+  fi
+
   local codex_bin="$HOME/.local/bin/codex"
   local installed_version=""
   if [[ -x $codex_bin ]]; then

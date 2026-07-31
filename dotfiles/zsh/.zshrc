@@ -1,16 +1,16 @@
-# Bloody Writer — portable ArchWSL shell configuration
+# Bloody Writer — portable shell configuration for Windows WSL and Android Termux
 export ZSH="$HOME/.oh-my-zsh"
 export PATH="$HOME/.local/bin:$PATH"
 
 ZSH_THEME="agnoster"
 plugins=(
   git
-  sudo
   z
   extract
   colored-man-pages
   command-not-found
 )
+(( $+commands[sudo] )) && plugins+=(sudo)
 
 HIST_STAMPS="yyyy-mm-dd"
 DISABLE_MAGIC_FUNCTIONS=true
@@ -32,7 +32,7 @@ unset settings_file
 
 export EDITOR="nvim"
 export VISUAL="nvim"
-export WINDOWS_DOCUMENTS="${BLOODY_WRITER_DOCUMENTS:-$HOME/Documents}"
+export WRITER_DOCUMENTS="${BLOODY_WRITER_DOCUMENTS:-$HOME/Documents}"
 
 alias ls='ls --color=auto'
 alias ll='ls -alF'
@@ -45,11 +45,20 @@ alias ta='tma'
 alias tn='tmux new-session -A -s writer'
 
 writer() {
-  if [[ ! -d $WINDOWS_DOCUMENTS ]]; then
-    printf 'Writer directory does not exist: %s\n' "$WINDOWS_DOCUMENTS" >&2
+  if [[ ! -d $WRITER_DOCUMENTS ]]; then
+    printf 'Writer directory does not exist: %s\n' "$WRITER_DOCUMENTS" >&2
     return 1
   fi
-  cd "$WINDOWS_DOCUMENTS" && nvim
+  cd "$WRITER_DOCUMENTS" && nvim
+}
+
+wsl-writer() {
+  if [[ -z ${BLOODY_WRITER_WSL_HOST:-} || -z ${BLOODY_WRITER_WSL_USER:-} ]]; then
+    printf 'Remote WSL is not configured. Run: bloody-writer remote\n' >&2
+    return 1
+  fi
+  local remote_tma="${BLOODY_WRITER_WSL_TMA:-/home/$BLOODY_WRITER_WSL_USER/.local/bin/tma}"
+  ssh -t -- "$BLOODY_WRITER_WSL_USER@$BLOODY_WRITER_WSL_HOST" "$remote_tma"
 }
 
 # Reuse one passphrase-unlocked GitHub key across terminals and tmux clients.

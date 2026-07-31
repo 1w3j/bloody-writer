@@ -2,6 +2,10 @@
 set -Eeuo pipefail
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+BW_REPO_ROOT="$repo_root"
+export BW_REPO_ROOT
+# shellcheck disable=SC1091
+source "$BW_REPO_ROOT/scripts/lib/common.sh"
 
 if ((EUID != 0)); then
   printf 'This bootstrap is only for the initial root shell of a fresh Arch WSL instance.\n' >&2
@@ -20,7 +24,8 @@ if [[ ${ID:-} != arch ]]; then
   exit 1
 fi
 
-printf '\nBloody Writer — fresh Arch WSL user bootstrap\n\n'
+bw_banner
+printf 'Fresh Arch Linux on Windows WSL user bootstrap\n\n'
 read -r -p 'New Linux username: ' target_user
 if [[ ! $target_user =~ ^[a-z_][a-z0-9_-]*$ ]]; then
   printf 'Use a lowercase Linux username containing letters, digits, underscores, or hyphens.\n' >&2

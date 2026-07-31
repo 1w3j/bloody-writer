@@ -11,6 +11,7 @@ readonly BW_PHASES=(
   "00-preflight"
   "10-system"
   "20-packages"
+  "25-host-theme"
   "30-shell"
   "40-dotfiles"
   "50-neovim"
@@ -21,12 +22,14 @@ readonly BW_PHASES=(
 
 bw_usage() {
   cat <<'EOF'
-Bloody Writer — reproducible Arch Linux on WSL terminal environment
+Bloody Writer — one resumable terminal setup for Windows WSL and Termux on Android
 
 Usage:
+  ./install.sh [options]
   bloody-writer install [options]
   bloody-writer update [options]
   bloody-writer status
+  bloody-writer platform
   bloody-writer doctor
   bloody-writer backup
   bloody-writer restore [BACKUP_DIRECTORY]
@@ -35,17 +38,34 @@ Usage:
   bloody-writer help
 
 Install options:
-  --yes                 Accept phase confirmations.
-  --dry-run             Print planned actions without changing the system.
-  --force               Re-run completed phases.
-  --from PHASE          Begin at PHASE, preserving earlier completion state.
-  --only PHASE          Run one phase only.
-  --skip-github         Leave Git/GitHub identity and SSH setup unfinished.
-  --skip-codex-login    Install Codex but do not launch its login flow.
+  --yes                 Accept safe phase confirmations (not passwords or logins).
+  --dry-run             Show the plan without changing files or installing packages.
+  --force               Re-run phases that are already complete.
+  --from PHASE          Resume from a chosen phase without clearing earlier state.
+  --only PHASE          Run exactly one phase.
+  --skip-host-theme     Defer the Windows Terminal or Termux visual host layer.
+  --skip-github         Defer Git identity, GitHub login, and GitHub SSH-key setup.
+  --skip-codex          Defer the local Codex phase on WSL.
+  --skip-codex-login    Install Codex on WSL but defer its login flow.
+  -h, --help            Show this guide.
+
+Automatic platform behavior:
+  Windows WSL 2   Full Arch Linux workstation, Windows Terminal theme, Codex.
+  Termux on Android  Native Zsh/tmux/Neovim/Git/SSH; Codex is used remotely in WSL.
+
+Pause and resume:
+  If Windows Terminal must reopen, WSL must restart, or Android needs a permission/app,
+  the installer records a checkpoint and stops safely. Complete the displayed action,
+  return to this repository, and run ./install.sh again.
 
 Phases:
-  00-preflight  10-system  20-packages  30-shell  40-dotfiles
-  50-neovim     60-codex   70-github    90-verify
+  00-preflight  10-system      20-packages   25-host-theme  30-shell
+  40-dotfiles   50-neovim      60-codex      70-github      90-verify
+
+Examples:
+  ./install.sh --dry-run
+  ./install.sh --yes --skip-github
+  ./install.sh --only 90-verify
 EOF
 }
 
@@ -65,6 +85,8 @@ bw_install() {
   local from_phase=""
   local only_phase=""
   export BW_SKIP_GITHUB=0
+  export BW_SKIP_HOST_THEME=0
+  export BW_SKIP_CODEX=0
   export BW_SKIP_CODEX_LOGIN=0
 
   while (($#)); do
@@ -72,7 +94,9 @@ bw_install() {
     --yes) BW_ASSUME_YES=1 ;;
     --dry-run) BW_DRY_RUN=1 ;;
     --force) BW_FORCE=1 ;;
+    --skip-host-theme) BW_SKIP_HOST_THEME=1 ;;
     --skip-github) BW_SKIP_GITHUB=1 ;;
+    --skip-codex) BW_SKIP_CODEX=1 ;;
     --skip-codex-login) BW_SKIP_CODEX_LOGIN=1 ;;
     --from)
       shift
@@ -94,13 +118,24 @@ bw_install() {
   done
   export BW_ASSUME_YES BW_DRY_RUN BW_FORCE
 
-  if ((EUID == 0)) && [[ $BW_TEST_MODE != 1 ]]; then
+  if [[ $BW_PLATFORM == unsupported && $BW_TEST_MODE != 1 ]]; then
+    bw_die "Unsupported platform. Use Arch Linux on Windows WSL 2 or the Termux app on Android."
+  fi
+
+  if ((EUID == 0)) && [[ $BW_TEST_MODE != 1 && $BW_PLATFORM == wsl ]]; then
     [[ $BW_DRY_RUN != 1 ]] ||
       bw_die "The one-time root bootstrap cannot be previewed with --dry-run. Run it without options."
     exec "$BW_REPO_ROOT/scripts/bootstrap-root.sh"
   fi
+  if ((EUID == 0)) && [[ $BW_TEST_MODE != 1 ]]; then
+    bw_die "Run Bloody Writer as a normal user on $(bw_platform_label), not root."
+  fi
 
   bw_ensure_dirs
+  bw_banner
+  bw_note "Detected: $(bw_platform_label)"
+  bw_note "State: $BW_STATE_DIR"
+  printf '\n'
   bw_load_phases
 
   local phase function started=0 found_only=0
@@ -130,6 +165,14 @@ bw_install() {
       bw_note "Leaving phase 70-github pending by request."
       continue
     fi
+    if [[ $phase == 25-host-theme && $BW_SKIP_HOST_THEME == 1 ]]; then
+      bw_note "Leaving phase 25-host-theme pending by request."
+      continue
+    fi
+    if [[ $phase == 60-codex && $BW_SKIP_CODEX == 1 ]]; then
+      bw_note "Leaving phase 60-codex pending by request."
+      continue
+    fi
 
     function="$(bw_phase_function "$phase")"
     declare -F "$function" >/dev/null || bw_die "Phase function is missing: $function"
@@ -139,7 +182,7 @@ bw_install() {
     else
       local result=$?
       if ((result == 20)); then
-        bw_warn "A WSL restart is required. Re-run ./install.sh afterward; completed phases will be skipped."
+        bw_warn "Installation paused at a manual checkpoint. Follow the instructions above, then run ./install.sh again."
         return 20
       fi
       return "$result"
@@ -152,13 +195,32 @@ bw_install() {
   if [[ -n ${BW_BACKUP_DIR:-} && $BW_DRY_RUN != 1 ]]; then
     bw_note "Pre-existing files were preserved in: $BW_BACKUP_DIR"
   fi
-  bw_log "Bloody Writer installation is complete."
-  bw_note "Start a new shell with: exec zsh"
+  if [[ $BW_DRY_RUN == 1 ]]; then
+    bw_log "Preview complete; no state was changed."
+  elif [[ -n $only_phase ]]; then
+    if bw_phase_done "$only_phase"; then
+      bw_log "Requested phase finished: $only_phase"
+    else
+      bw_warn "Requested phase remains pending: $only_phase"
+    fi
+  else
+    local pending=0
+    for phase in "${BW_PHASES[@]}"; do
+      bw_phase_done "$phase" || pending=$((pending + 1))
+    done
+    if ((pending == 0)); then
+      bw_log "Bloody Writer installation is complete."
+      bw_note "Start the configured shell now with: exec zsh"
+    else
+      bw_warn "$pending phase(s) remain pending. Run 'bloody-writer status' for details."
+    fi
+  fi
 }
 
 bw_status() {
   bw_ensure_dirs
-  printf 'Bloody Writer %s (%s)\n\n' "$BLOODY_WRITER_VERSION" "$(bw_repo_commit)"
+  printf 'Bloody Writer %s (%s)\n' "$BLOODY_WRITER_VERSION" "$(bw_repo_commit)"
+  printf 'Platform: %s\n\n' "$(bw_platform_label)"
   local phase state
   for phase in "${BW_PHASES[@]}"; do
     state="pending"
@@ -168,6 +230,10 @@ bw_status() {
   if [[ -f $BW_STATE_DIR/restart-required ]]; then
     printf '\nRestart required: %s\n' "$(cat "$BW_STATE_DIR/restart-required")"
   fi
+  local checkpoint
+  while IFS= read -r checkpoint; do
+    printf 'Manual checkpoint: %s\n' "$(cat "$checkpoint")"
+  done < <(find "$BW_STATE_DIR/manual" -maxdepth 1 -type f -print 2>/dev/null | LC_ALL=C sort)
 }
 
 bw_update() {
@@ -178,7 +244,7 @@ bw_update() {
     case "$argument" in
     --dry-run) BW_DRY_RUN=1 ;;
     --yes) BW_ASSUME_YES=1 ;;
-    --force | --skip-github | --skip-codex-login) ;;
+    --force | --skip-host-theme | --skip-github | --skip-codex | --skip-codex-login) ;;
     --from | --only)
       shift
       (($#)) || bw_die "$argument requires a phase."
@@ -200,7 +266,7 @@ bw_update() {
   bw_log "Fetching a fast-forward-only update."
   bw_run git -C "$BW_REPO_ROOT" pull --ff-only
   local phase
-  for phase in 20-packages 30-shell 40-dotfiles 50-neovim 60-codex 90-verify; do
+  for phase in 20-packages 25-host-theme 30-shell 40-dotfiles 50-neovim 60-codex 90-verify; do
     bw_clear_phase "$phase"
   done
   bw_install "${arguments[@]}"
@@ -219,6 +285,7 @@ bw_backup() {
     "$HOME/.config/nvim" \
     "$HOME/.config/bloody-writer" \
     "$HOME/.local/bin/tma" \
+    "$HOME/.local/bin/bw-clipboard-copy" \
     "$HOME/.local/bin/bloody-writer"; do
     [[ -e $path || -L $path ]] && paths+=("${path#"$HOME"/}")
   done
@@ -315,6 +382,7 @@ case "$command_name" in
 install) bw_install "$@" ;;
 update) bw_update "$@" ;;
 status) bw_status ;;
+platform) bw_platform_label ;;
 doctor) exec "$BW_REPO_ROOT/scripts/doctor.sh" "$@" ;;
 backup) bw_backup ;;
 restore) bw_restore "$@" ;;

@@ -1,6 +1,7 @@
 # Contributing
 
-Contributions are welcome when they preserve Bloody Writer's security and portability boundary.
+Contributions are welcome when they preserve Bloody Writer's security and portability boundary
+across Arch Linux on Windows WSL and Termux on Android.
 
 ## Development
 
@@ -32,7 +33,8 @@ git diff --check
 ## Theme changes
 
 Theme changes should include a contrast rationale and keep the palette synchronized across
-Neovim, tmux, Zsh, Windows Terminal, and documentation where applicable.
+Neovim, tmux, Zsh, Windows Terminal, Termux, and documentation where applicable. Follow the
+examples and file-safety map in [docs/CUSTOMIZING.md](docs/CUSTOMIZING.md).
 
 ## Security reports
 

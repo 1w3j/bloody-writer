@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v clip.exe >/dev/null 2>&1; then
+  exec clip.exe
+fi
+
+if command -v termux-clipboard-set >/dev/null 2>&1; then
+  exec termux-clipboard-set
+fi
+
+printf 'No supported clipboard bridge was found (WSL clip.exe or Termux:API).\n' >&2
+exit 1

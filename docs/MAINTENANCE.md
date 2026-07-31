@@ -1,62 +1,45 @@
 # Maintenance and releases
 
-## Normal update
+## Normal device update
 
 ```bash
 cd ~/bloody-writer
 bloody-writer update
 ```
 
-The command refuses a dirty checkout, pulls with `--ff-only`, and reapplies dependency,
-dotfile, Neovim, Codex, and verification phases.
+The command refuses a dirty checkout, pulls with `--ff-only`, clears the phases affected by a
+theme/dependency update, and reuses automatic WSL/Termux dispatch. Host phases may pause again when
+a new font, palette, or profile needs an operating-system reload.
 
-## Change the theme
+## Full customization workflow
 
-Keep the palette synchronized across:
+Use [`CUSTOMIZING.md`](CUSTOMIZING.md) for the visual file map, files never to touch, private local
+settings, real palette/alias/package/plugin examples, screenshot hygiene, fork setup, Git commands,
+and release checklist.
 
-- `terminal/bloody-writer.json`
-- `dotfiles/nvim/.config/nvim/lua/writer/theme.lua`
-- `dotfiles/tmux/.tmux.conf`
-- `dotfiles/zsh/.zshrc`
-- palette tables and screenshots in documentation
+## Upgrade reviewed pins
 
-Semantic colors inside Neovim may differ from the ANSI terminal slots when readability requires
-it. Document intentional divergence.
+| Layer | Pin | Reset/verify |
+|---|---|---|
+| Oh My Zsh | `OH_MY_ZSH_COMMIT` | `30-shell`; Zsh syntax/startup/prompt |
+| Codex | `CODEX_VERSION` | `60-codex`; WSL version/login/doctor |
+| Nerd Font | `NERD_FONT_VERSION`, `NERD_FONT_SHA256` | `25-host-theme`; both Windows and Termux rendering |
+| Neovim plugins | `lazy-lock.json` | `50-neovim`; `:checkhealth`, Writer feature exercise |
 
-## Upgrade Neovim plugins
+Review authoritative upstream release notes before changing a pin. Codex is local to WSL; the
+Termux on Android workflow validates remote access rather than installing an Android binary.
 
-1. Run `:Lazy update`.
-2. Review `lazy-lock.json`.
-3. Run `:checkhealth`.
-4. Exercise Markdown, NvimTree, Telescope, completion, LSP, and `Space ?`.
-5. Run `tests/run.sh`.
-6. Update the changelog.
+## Package manifests
 
-Do not commit downloaded plugin directories.
+| File | Ecosystem |
+|---|---|
+| `manifests/arch-packages.txt` | Arch Linux on Windows WSL (`pacman`) |
+| `manifests/termux-packages.txt` | Native Termux on Android (`pkg`) |
+| `manifests/npm-globals.txt` | Shared global Node language/format tools |
 
-## Change workstation packages
+Keep entries sorted, use platform-native package names, and document intentional capability gaps.
 
-Edit `manifests/arch-packages.txt` or `manifests/npm-globals.txt`, update the observed baseline
-in `docs/SNAPSHOT.md`, reset phase `20-packages`, and run the full tests. Keep project-specific
-runtime stacks out of this terminal configuration.
-
-## Upgrade Oh My Zsh
-
-Update `OH_MY_ZSH_COMMIT` in `versions.env`, reset phase `30-shell`, and verify the Agnoster
-`prompt_dir` override and shell startup:
-
-```bash
-zsh -n dotfiles/zsh/.zshrc
-time zsh -i -c exit
-```
-
-## Upgrade Codex
-
-Update `CODEX_VERSION` in `versions.env` after reviewing the official release. Reset phase
-`60-codex`, verify `codex --version`, `codex login status`, and `codex doctor`. Never add
-Codex auth or state files to Git.
-
-## Release checklist
+## Release checks
 
 ```bash
 tests/run.sh
@@ -64,11 +47,6 @@ git diff --check
 git status --short
 ```
 
-Also verify:
-
-- Fresh temporary-home linker test passes.
-- Secret scan passes.
-- Every shell file passes ShellCheck.
-- JSON files parse.
-- Documentation describes new commands and phases.
-- `CHANGELOG.md` and `versions.env` agree.
+Also verify a WSL dry run, a real Termux permission/clipboard path, Windows Terminal reload, remote
+`wsl-writer`, Neovim's `Space ?`, `tma` attach and confirmed kill, public image privacy, and matching
+`CHANGELOG.md`/`versions.env` versions.
