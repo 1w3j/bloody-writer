@@ -1,0 +1,10 @@
+# Safe, portable Codex CLI baseline.
+# Authentication, installation IDs, sessions, plugins, and machine paths are never tracked.
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+network_access = true
+
+[mcp_servers.openaiDeveloperDocs]
+url = "https://developers.openai.com/mcp"

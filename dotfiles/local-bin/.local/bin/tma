@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v tmux >/dev/null 2>&1; then
+  printf 'tmux is not installed on this machine.\n' >&2
+  exit 1
+fi
+
+if ! tmux has-session 2>/dev/null; then
+  printf 'No tmux sessions exist yet.\n'
+  read -r -p 'Name for a new session [main]: ' session_name
+  session_name=${session_name:-main}
+  exec tmux new-session -s "$session_name"
+fi
+
+session_lines=$(tmux list-sessions -F '#{session_name}	#{session_windows} window(s)	#{?session_attached,attached,detached}	created #{t:session_created}')
+
+if command -v fzf >/dev/null 2>&1 && [[ -t 0 && -t 1 ]]; then
+  selection=$(printf '%s\n' "$session_lines" \
+    | fzf --height=60% --reverse --border \
+      --prompt='Attach tmux session > ' \
+      --header='Enter: attach   Esc: cancel' \
+      --delimiter=$'\t' --with-nth=1,2,3,4) || exit 0
+  session_name=${selection%%$'\t'*}
+else
+  printf 'Available tmux sessions:\n'
+  select session_name in $(tmux list-sessions -F '#{session_name}'); do
+    [[ -n ${session_name:-} ]] && break
+    printf 'Choose a number from the list.\n' >&2
+  done
+fi
+
+if [[ -n ${TMUX:-} ]]; then
+  exec tmux switch-client -t "$session_name"
+else
+  exec tmux attach-session -t "$session_name"
+fi

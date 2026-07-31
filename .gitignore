@@ -1,0 +1,27 @@
+# Local installer state (normally stored under ~/.local/state)
+.bloody-writer-state/
+
+# Authentication, keys, histories, caches, and machine state
+.codex/
+.ssh/
+.config/gh/
+.zsh_history
+.zcompdump*
+.bash_history
+.keychain/
+.cache/
+
+# Neovim downloaded/runtime state
+.local/share/nvim/
+.local/state/nvim/
+
+# Editor and OS noise
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Test output
+tests/tmp/
+coverage/

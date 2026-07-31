@@ -1,0 +1,58 @@
+# Bloody Writer — portable ArchWSL shell configuration
+export ZSH="$HOME/.oh-my-zsh"
+export PATH="$HOME/.local/bin:$PATH"
+
+ZSH_THEME="agnoster"
+plugins=(
+  git
+  sudo
+  z
+  extract
+  colored-man-pages
+  command-not-found
+)
+
+HIST_STAMPS="yyyy-mm-dd"
+DISABLE_MAGIC_FUNCTIONS=true
+zstyle ':omz:update' mode disabled
+
+source "$ZSH/oh-my-zsh.sh"
+
+# Hide the local username and hostname from Agnoster.
+DEFAULT_USER="$USER"
+
+# Bloody-red Agnoster directory segment: ANSI red background, white text.
+prompt_dir() {
+  prompt_segment 1 15 '%~'
+}
+
+settings_file="${XDG_CONFIG_HOME:-$HOME/.config}/bloody-writer/settings.zsh"
+[[ -r $settings_file ]] && source "$settings_file"
+unset settings_file
+
+export EDITOR="nvim"
+export VISUAL="nvim"
+export WINDOWS_DOCUMENTS="${BLOODY_WRITER_DOCUMENTS:-$HOME/Documents}"
+
+alias ls='ls --color=auto'
+alias ll='ls -alF'
+alias la='ls -A'
+alias grep='grep --color=auto'
+alias tree='tree -C --dirsfirst -F'
+alias v='nvim'
+alias vim='nvim'
+alias ta='tma'
+alias tn='tmux new-session -A -s writer'
+
+writer() {
+  if [[ ! -d $WINDOWS_DOCUMENTS ]]; then
+    printf 'Writer directory does not exist: %s\n' "$WINDOWS_DOCUMENTS" >&2
+    return 1
+  fi
+  cd "$WINDOWS_DOCUMENTS" && nvim
+}
+
+# Reuse one passphrase-unlocked GitHub key across terminals and tmux clients.
+if [[ -n ${BLOODY_WRITER_GITHUB_KEY:-} && -f $BLOODY_WRITER_GITHUB_KEY ]]; then
+  eval "$(keychain --eval --quiet "$(basename -- "$BLOODY_WRITER_GITHUB_KEY")")"
+fi

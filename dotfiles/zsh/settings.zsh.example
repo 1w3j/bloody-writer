@@ -1,0 +1,3 @@
+# Personal values live here rather than in the public repository.
+export BLOODY_WRITER_DOCUMENTS="${BLOODY_WRITER_DOCUMENTS:-$HOME/Documents}"
+export BLOODY_WRITER_GITHUB_KEY="${BLOODY_WRITER_GITHUB_KEY:-}"
