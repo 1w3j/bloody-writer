@@ -138,7 +138,7 @@ bw_install() {
   printf '\n'
   bw_load_phases
 
-  local phase function started=0 found_only=0
+  local phase function started=0 found_only=0 phases_completed=0
   for phase in "${BW_PHASES[@]}"; do
     if [[ -n $only_phase && $phase != "$only_phase" ]]; then
       continue
@@ -179,6 +179,7 @@ bw_install() {
     bw_log "Phase $phase"
     if "$function"; then
       bw_mark_phase "$phase"
+      phases_completed=$((phases_completed + 1))
     else
       local result=$?
       if ((result == 20)); then
@@ -210,7 +211,14 @@ bw_install() {
     done
     if ((pending == 0)); then
       bw_log "Bloody Writer installation is complete."
-      bw_note "Start the configured shell now with: exec zsh"
+      if [[ $BW_PLATFORM == termux && $phases_completed -gt 0 ]]; then
+        printf '\nAll installation phases completed successfully.\n'
+        printf 'Fully close the Termux app, then reopen it once to activate the new font, colors, Zsh, and Agnoster prompt.\n\n'
+      elif [[ $BW_PLATFORM == termux ]]; then
+        bw_note "Termux configuration was already complete; no app restart is required."
+      else
+        bw_note "Start the configured shell now with: exec zsh"
+      fi
     else
       bw_warn "$pending phase(s) remain pending. Run 'bloody-writer status' for details."
     fi

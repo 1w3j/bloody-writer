@@ -98,6 +98,10 @@ cd ~/bloody-writer
 On rerun, the pending phase verifies the inconvenience was resolved. If it was not, the installer
 pauses again without repeating previous work.
 
+When every Termux phase is complete, the final success output asks the user to fully close and
+reopen the Termux app once. That activation notice is not printed for a dry run, a failed phase, a
+manual checkpoint, or an installation with skipped/pending phases.
+
 ### WSL systemd checkpoint
 
 When `/etc/wsl.conf` changes, run the printed commands from Windows PowerShell:

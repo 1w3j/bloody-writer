@@ -4,6 +4,13 @@ All notable changes to Bloody Writer are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Hide Termux's generated `u0_a…@localhost` identity by matching Agnoster against Zsh's
+  authoritative `USERNAME` parameter instead of the potentially different inherited `USER` value.
+- Tell Termux users to close and reopen the app only after every installation phase completes
+  successfully, so the new font, colors, login shell, and Agnoster prompt are activated together.
+
 ## [0.2.0] - 2026-07-31
 
 ### Added

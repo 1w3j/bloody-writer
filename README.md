@@ -136,7 +136,8 @@ cd bloody-writer
 The installer detects Termux automatically. It uses `pkg`, keeps all work under the Android app
 user, requests shared-storage permission, installs Termux colors/font, configures the Android
 clipboard bridge, and links Writer to shared `Documents`. No `sudo`, Android root, or WSL flag is
-needed.
+needed. Only after every phase succeeds, the installer asks you to fully close and reopen Termux
+once so Android reloads the font, colors, Zsh login shell, and Agnoster prompt.
 
 After both devices are installed, configure the private Termux-to-WSL path:
 
