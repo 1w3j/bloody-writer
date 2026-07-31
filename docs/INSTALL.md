@@ -31,6 +31,10 @@ tma --help
 The installer help explains its phases, examples, platform behavior, and every skip option. The
 `tma` help explains local and SSH attach behavior plus safe session killing.
 
+`bloody-writer update` also explains its safety model: known generated Neovim lock drift from an
+older release is preserved and repaired automatically, authored changes remain protected, and the
+newly pulled installer relaunches itself before applying phases.
+
 ## Phase reference
 
 | Phase | Windows WSL behavior | Termux on Android behavior | Can pause? |
@@ -153,6 +157,15 @@ Before replacing a conflicting target, the installer moves it to a timestamped d
 
 The `manifest.tsv` inside records each original and saved path. Backups are never automatically
 deleted.
+
+Automatic update repair uses a separate recovery tree:
+
+```text
+~/.local/state/bloody-writer/update-recovery/YYYYMMDD-HHMMSS-NNNNNNNNN/
+```
+
+It contains the exact pre-repair file and a Git binary patch. This path is used only for narrowly
+allowlisted generated drift; authored or staged changes stop the update and are not moved.
 
 ```bash
 bloody-writer backup              # make a portable managed-config archive

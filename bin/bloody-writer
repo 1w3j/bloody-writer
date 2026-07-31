@@ -20,6 +20,13 @@ readonly BW_PHASES=(
   "90-verify"
 )
 
+# Runtime tools must not normally write into the Git checkout. This narrowly scoped recovery list
+# exists for upgrades from releases where Neovim still wrote its lockfile through the managed
+# ~/.config/nvim symlink. Add paths only when the write is deterministic, generated, and backed up.
+readonly BW_GENERATED_UPDATE_REPAIR_PATHS=(
+  "dotfiles/nvim/.config/nvim/lazy-lock.json"
+)
+
 bw_usage() {
   cat <<'EOF'
 Bloody Writer — one resumable terminal setup for Windows WSL and Termux on Android
@@ -57,6 +64,11 @@ Pause and resume:
   If Windows Terminal must reopen, WSL must restart, or Android needs a permission/app,
   the installer records a checkpoint and stops safely. Complete the displayed action,
   return to this repository, and run ./install.sh again.
+
+Update safety:
+  Known generated Neovim lock drift from older releases is backed up and repaired.
+  Staged, unknown, or authored changes are listed and preserved for manual review.
+  After pulling, update relaunches the new installer so added phases work immediately.
 
 Phases:
   00-preflight  10-system      20-packages   25-host-theme  30-shell
@@ -268,16 +280,98 @@ bw_update() {
   export BW_DRY_RUN BW_ASSUME_YES
   bw_have git || bw_die "git is required."
   [[ -d $BW_REPO_ROOT/.git ]] || bw_die "Update requires a Git clone."
-  if [[ -n $(git -C "$BW_REPO_ROOT" status --porcelain) ]]; then
-    bw_die "The Bloody Writer checkout has local changes. Commit or stash them before updating."
+
+  if [[ ${BW_UPDATE_AFTER_PULL:-0} != 1 ]]; then
+    bw_prepare_checkout_for_update
+    bw_log "Fetching a fast-forward-only update."
+    bw_run git -C "$BW_REPO_ROOT" pull --ff-only
+
+    # A pull can replace this command, its phase list, and its helper functions. Continue through
+    # the freshly checked-out executable so one update command can understand newly added phases.
+    if [[ $BW_DRY_RUN != 1 ]]; then
+      exec env BW_UPDATE_AFTER_PULL=1 "$BW_REPO_ROOT/bin/bloody-writer" update "${arguments[@]}"
+    fi
+  else
+    bw_require_clean_checkout
+    bw_note "Continuing with the freshly updated installer."
   fi
-  bw_log "Fetching a fast-forward-only update."
-  bw_run git -C "$BW_REPO_ROOT" pull --ff-only
+
   local phase
   for phase in 20-packages 25-host-theme 30-shell 40-dotfiles 50-neovim 60-codex 90-verify; do
     bw_clear_phase "$phase"
   done
   bw_install "${arguments[@]}"
+}
+
+bw_checkout_status() {
+  git -C "$BW_REPO_ROOT" status --short --untracked-files=all
+}
+
+bw_print_protected_checkout_error() {
+  local status="$1"
+  printf '%s\n' "$status" >&2
+  bw_warn "These changes are not recognized as generated runtime drift, so they were preserved."
+  bw_die "Commit or stash the listed files, then run 'bloody-writer update' again."
+}
+
+bw_require_clean_checkout() {
+  local status
+  status="$(bw_checkout_status)"
+  [[ -z $status ]] || bw_print_protected_checkout_error "$status"
+}
+
+bw_prepare_checkout_for_update() {
+  local status
+  status="$(bw_checkout_status)"
+  [[ -n $status ]] || return 0
+
+  # Never auto-repair a staged change: staging is an explicit maintainer action.
+  if ! git -C "$BW_REPO_ROOT" diff --cached --quiet --; then
+    bw_print_protected_checkout_error "$status"
+  fi
+
+  local path candidate_status other_status
+  local exclusions=()
+  for path in "${BW_GENERATED_UPDATE_REPAIR_PATHS[@]}"; do
+    exclusions+=(":(exclude)$path")
+  done
+  other_status="$(
+    git -C "$BW_REPO_ROOT" status --short --untracked-files=all -- . "${exclusions[@]}"
+  )"
+  [[ -z $other_status ]] || bw_print_protected_checkout_error "$status"
+
+  # Only an existing, unstaged modification is eligible. Deletions, renames, untracked files,
+  # staged changes, and authored changes elsewhere remain protected.
+  local repair_paths=()
+  for path in "${BW_GENERATED_UPDATE_REPAIR_PATHS[@]}"; do
+    candidate_status="$(git -C "$BW_REPO_ROOT" status --short -- "$path")"
+    [[ $candidate_status == ' M '* ]] || continue
+    [[ -n $(git -C "$BW_REPO_ROOT" diff --name-only --diff-filter=M -- "$path") ]] || continue
+    repair_paths+=("$path")
+  done
+  ((${#repair_paths[@]} > 0)) || bw_print_protected_checkout_error "$status"
+
+  local stamp recovery_dir
+  stamp="$(date +%Y%m%d-%H%M%S-%N)"
+  recovery_dir="$BW_STATE_DIR/update-recovery/$stamp"
+  bw_log "Repairing generated runtime drift before updating."
+  if [[ $BW_DRY_RUN == 1 ]]; then
+    for path in "${repair_paths[@]}"; do
+      bw_note "Would preserve and restore: $path"
+    done
+    return 0
+  fi
+
+  mkdir -p "$recovery_dir/files"
+  git -C "$BW_REPO_ROOT" diff --binary -- "${repair_paths[@]}" >"$recovery_dir/generated-drift.patch"
+  for path in "${repair_paths[@]}"; do
+    mkdir -p "$recovery_dir/files/$(dirname -- "$path")"
+    cp -p -- "$BW_REPO_ROOT/$path" "$recovery_dir/files/$path"
+  done
+  git -C "$BW_REPO_ROOT" restore --worktree -- "${repair_paths[@]}"
+  bw_note "Recovered generated files; the previous bytes and patch are preserved at:"
+  bw_note "$recovery_dir"
+  bw_require_clean_checkout
 }
 
 bw_backup() {

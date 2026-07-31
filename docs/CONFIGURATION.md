@@ -52,12 +52,17 @@ Oh My Zsh automatic updates are disabled because `versions.env` tracks a reviewe
 |---|---|
 | Theme | `lua/writer/theme.lua` |
 | Plugins | `lua/writer/plugins.lua` |
-| Locked plugin commits | `lazy-lock.json` |
+| Reviewed plugin commits | tracked `lazy-lock.json` |
+| Normal-session plugin lock | `~/.local/state/nvim/bloody-writer/lazy-lock.json` |
 | Platform clipboard | `lua/writer/platform.lua` |
 | Live guide | `CHEATSHEET.md` |
 
 The platform module chooses Windows interop in WSL or Termux:API on Android. `Ctrl-c`/`Ctrl-v`
 map to the detected system clipboard and `Ctrl-q` preserves Visual Block.
+
+Phase 50 seeds the device-local lock from the reviewed tracked file before synchronization. Normal
+Neovim use can therefore update device state without modifying the repository through its managed
+symlink. Maintainers deliberately refresh the tracked pins with `scripts/update-neovim-lock.sh`.
 
 ## Codex
 

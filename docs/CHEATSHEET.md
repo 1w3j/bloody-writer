@@ -38,7 +38,7 @@ opens with `Space ?`.
 | `bloody-writer platform` | Print automatic platform detection |
 | `bloody-writer status` | Show complete/pending phases and manual must-dos |
 | `bloody-writer doctor` | Check packages, links, integrations, and authentication warnings |
-| `bloody-writer update` | Require clean Git state, pull fast-forward-only, reapply |
+| `bloody-writer update` | Repair known generated drift, pull fast-forward-only, relaunch fresh code, reapply |
 | `bloody-writer backup` | Archive managed config without secrets |
 | `bloody-writer restore` | Restore a preserved pre-install configuration |
 | `bloody-writer reset-phase PHASE` | Reopen one phase deliberately |
@@ -114,3 +114,13 @@ WSL and Tailscale available.
 
 Private keys, tokens, Codex state, and histories are device-local and never part of the theme
 repository.
+
+## Maintain with an AI agent
+
+| Need | Start here |
+|---|---|
+| Give a new agent the repository rules | Root `AGENTS.md` |
+| Copy a complete first-task prompt | `docs/AI-MAINTAINERS.md` |
+| Find the right code and docs for a task | Repository map and routing table in that guide |
+| Update reviewed Neovim plugin pins | `scripts/update-neovim-lock.sh` |
+| Hand off tested work | Verification and handoff template in the AI maintainer guide |

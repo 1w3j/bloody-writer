@@ -125,11 +125,13 @@ scope are intentional.
 
 ## Example 4: update Neovim plugins
 
-Inside the managed Neovim:
+Normal Neovim sessions intentionally use a device-local runtime lock so opening or updating
+plugins cannot dirty the repository through `~/.config/nvim`. Update the reviewed tracked lock in
+explicit maintainer mode:
 
-```vim
-:Lazy update
-:checkhealth
+```bash
+scripts/update-neovim-lock.sh
+nvim '+checkhealth'
 ```
 
 Review only `lazy-lock.json` and intended plugin declarations:
@@ -195,8 +197,9 @@ cd ~/bloody-writer
 bloody-writer update
 ```
 
-The update refuses local uncommitted changes. Commit them to your fork or intentionally stash
-them first; Bloody Writer will not overwrite a dirty source checkout.
+The updater automatically repairs only known generated lock drift and preserves its old bytes and
+patch. It lists and protects every staged, unknown, or authored change. Commit those changes to
+your fork or intentionally stash them first; Bloody Writer will not overwrite maintainer work.
 
 ## Release checklist
 

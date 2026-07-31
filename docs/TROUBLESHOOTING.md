@@ -73,6 +73,25 @@ Bloody Writer sets Agnoster's local-user baseline from Zsh's authoritative `$USE
 which matches Android's generated Termux account. After a successful update, fully close the
 Termux app and reopen it. Agnoster intentionally may still show context during an SSH login.
 
+## Update reports local checkout changes
+
+Run the update again normally:
+
+```bash
+cd ~/bloody-writer
+bloody-writer update
+```
+
+If an older Bloody Writer release let Neovim rewrite only the tracked `lazy-lock.json`, the current
+updater preserves the previous file and patch under
+`~/.local/state/bloody-writer/update-recovery/`, restores the reviewed version, and continues.
+Normal Neovim sessions now write to a device-local lock instead, so the same drift should not
+return.
+
+For any staged, unknown, deleted, renamed, or authored change, update prints the exact Git status
+and stops without pulling. Review with `git diff`; commit work intended for your fork or stash it
+deliberately. Do not use a broad reset or `git clean` when you do not recognize the files.
+
 ## Termux clipboard does not work
 
 Confirm the Termux:API Android app came from the same source as Termux, then:

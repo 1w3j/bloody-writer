@@ -9,6 +9,20 @@ keeping installation safe, resumable, portable, and understandable on both platf
 The current tracked configuration, `versions.env`, accepted documentation, and tests are the
 repository source of truth. Old chat transcripts and screenshots are historical context only.
 
+## Start here on every agent run
+
+1. Read this file completely; it is the repository-wide instruction contract.
+2. Inspect `git status --short --branch` and preserve unrelated changes.
+3. Read [`docs/AI-MAINTAINERS.md`](docs/AI-MAINTAINERS.md), then load only the task-specific
+   documents from its routing table.
+4. Trace the user-facing command from `bin/bloody-writer` into `scripts/lib/common.sh` and the
+   relevant `scripts/phases/` file before changing installer behavior.
+5. State the intended scope, implement the smallest complete change, add a focused regression
+   test, update affected operational documentation, and run the verification contract below.
+
+Do not depend on an earlier AI chat to understand the project. If an important decision exists
+only in conversation, encode it in the appropriate tracked document as part of the change.
+
 ## Security rules
 
 - Never commit private SSH keys, passwords, passphrases, API tokens, OAuth credentials, Codex
@@ -35,13 +49,19 @@ repository source of truth. Old chat transcripts and screenshots are historical 
 - Validate destructive or move targets are inside the intended home directory.
 - Do not silently overwrite existing Codex, SSH, GitHub, or personal settings.
 - Account authentication and key passphrases remain interactive and user-owned.
-- `bloody-writer update` must preserve fast-forward-only Git behavior and reject dirty checkouts.
+- `bloody-writer update` must preserve fast-forward-only Git behavior. It may automatically repair
+  only explicitly allowlisted, deterministic runtime drift after preserving recovery bytes and a
+  patch under installer state. Staged, unknown, deleted, renamed, or authored changes must be
+  listed and preserved without pulling.
+- After a successful pull, `bloody-writer update` must relaunch the newly checked-out executable
+  before clearing phases so a single command can understand new phases and future updater logic.
 
 ## Configuration rules
 
 - Keep personal values in `~/.config/bloody-writer/settings.zsh`, never in tracked dotfiles.
-- Keep Neovim plugin commits in `lazy-lock.json`; never commit downloaded plugin/state/cache
-  directories.
+- Keep reviewed Neovim plugin commits in the tracked `lazy-lock.json`; normal Neovim sessions use
+  a device-local runtime copy. Update the tracked lock deliberately with
+  `scripts/update-neovim-lock.sh`. Never commit downloaded plugin/state/cache directories.
 - Keep Oh My Zsh, Codex, and Nerd Font pins in `versions.env`.
 - When changing the theme, inspect Zsh, tmux, Neovim, Windows Terminal, Termux properties,
   logo/screenshots, cheat sheets, and docs for palette drift.
@@ -88,6 +108,8 @@ Report tests that could not run and why.
 ## Change discipline
 
 - Keep changes narrow and review the full diff before committing.
+- Leave a future agent enough tracked context to reproduce the decision: behavior, safety
+  boundary, focused test, affected docs, and any deliberate platform difference.
 - Do not rewrite user-authored documentation or configuration unrelated to the task.
 - Update `CHANGELOG.md` for user-visible changes.
 - Use `main` as the default branch and Conventional Commit-style summaries where useful.
