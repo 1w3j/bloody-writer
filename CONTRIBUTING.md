@@ -3,6 +3,10 @@
 Contributions are welcome when they preserve Bloody Writer's security and portability boundary
 across Arch Linux on Windows WSL and Termux on Android.
 
+Human maintainers using a coding agent should begin with
+[`docs/AI-MAINTAINERS.md`](docs/AI-MAINTAINERS.md). Compatible agents must read the root
+[`AGENTS.md`](AGENTS.md) before changing files.
+
 ## Development
 
 ```bash

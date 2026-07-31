@@ -32,7 +32,12 @@ phase_50_neovim() {
     bw_run install -m 0644 "$temporary" "$spell_dir/$file"
   done
 
-  bw_log "Synchronizing Neovim plugins to lazy-lock.json."
+  local runtime_lock_dir="${XDG_STATE_HOME:-$HOME/.local/state}/nvim/bloody-writer"
+  local runtime_lockfile="$runtime_lock_dir/lazy-lock.json"
+  bw_run mkdir -p "$runtime_lock_dir"
+  bw_run cp -- "$BW_REPO_ROOT/dotfiles/nvim/.config/nvim/lazy-lock.json" "$runtime_lockfile"
+
+  bw_log "Synchronizing Neovim plugins from the device-local runtime lock."
   bw_run env XDG_CONFIG_HOME="$HOME/.config" nvim --headless "+Lazy! sync" +qa
   bw_run env XDG_CONFIG_HOME="$HOME/.config" nvim --headless "+checkhealth vim.lsp" +qa
 }

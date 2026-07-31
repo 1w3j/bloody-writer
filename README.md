@@ -43,6 +43,7 @@ which host it is running on.
 - [Daily commands](#daily-commands)
 - [Showcase](#showcase)
 - [Updates and customization](#updates-and-customization)
+- [Working with AI agents](#working-with-ai-agents)
 - [Security boundary](#security-boundary)
 - [Documentation](#documentation)
 
@@ -179,7 +180,7 @@ The unfinished phase verifies the condition and continues; earlier phases are no
 | `./install.sh` | Install or resume at the first unfinished phase |
 | `bloody-writer status` | Show detected platform, completed phases, and manual checkpoint text |
 | `bloody-writer doctor` | Diagnose the local WSL or Termux installation |
-| `bloody-writer update` | Require a clean checkout, fast-forward, and reapply changed layers |
+| `bloody-writer update` | Repair known generated drift, fast-forward, relaunch fresh code, and reapply |
 | `bloody-writer backup` | Archive managed configuration without credentials |
 | `bloody-writer restore` | Restore the latest automatic pre-install backup |
 | `bloody-writer remote` | Configure WSL as host or Termux on Android as client automatically |
@@ -207,13 +208,25 @@ cd ~/bloody-writer
 bloody-writer update
 ```
 
-The update refuses a dirty checkout and uses `git pull --ff-only`. If this is your own fork,
-change the palette, plugins, packages, commands, or documentation through reviewed Git changes,
-then run the focused phase or normal installer.
+The update uses `git pull --ff-only`. It safely recovers the known Neovim lockfile drift created
+by older releases, preserves the old bytes and patch in installer state, relaunches the freshly
+pulled installer, and reapplies affected phases. Unknown, authored, or staged changes are listed
+and preserved; commit or stash those deliberately before updating.
 
 The complete contributor-facing map—including real palette, alias, package, Neovim plugin,
 screenshot, commit, and push examples—is in
 **[Customizing and publishing your theme](docs/CUSTOMIZING.md)**.
+
+## Working with AI agents
+
+The root [`AGENTS.md`](AGENTS.md) gives compatible coding agents a repository-wide safety and
+verification contract from their first run. Humans can start an AI-assisted change with
+**[Working on Bloody Writer with AI agents](docs/AI-MAINTAINERS.md)**, which includes a reusable
+prompt, task-to-document routing table, codebase map, stable upgrade contracts, and handoff format.
+
+The repository—not an earlier AI conversation—is the maintained source of truth. New decisions
+should land with implementation, focused tests, operational documentation, and changelog context
+so a distant-future agent can continue without reconstructing old chats.
 
 ## Security boundary
 
@@ -241,6 +254,7 @@ machine.
 - [Windows Terminal host layer](docs/WINDOWS-TERMINAL.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Maintenance and releases](docs/MAINTENANCE.md)
+- [AI-agent and human maintainer guide](docs/AI-MAINTAINERS.md)
 - [Snapshot record](docs/SNAPSHOT.md)
 - [Upstream primary sources](docs/SOURCES.md)
 

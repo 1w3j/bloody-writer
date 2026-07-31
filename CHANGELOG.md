@@ -4,6 +4,20 @@ All notable changes to Bloody Writer are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Root-agent onboarding and a human/AI maintenance guide with a reusable first prompt, repository
+  map, task-specific document routing, stable future-upgrade contracts, and handoff template.
+- Explicit `scripts/update-neovim-lock.sh` maintainer workflow for reviewed plugin-pin changes.
+
+### Changed
+
+- Normal Neovim sessions now use a device-local copy of the reviewed plugin lock, preventing
+  runtime plugin operations from dirtying the Git checkout through the managed config symlink.
+- `bloody-writer update` now safely backs up and repairs known legacy Neovim lock drift, prints and
+  protects all other local edits, and relaunches itself after pulling so new installer phases are
+  handled in the same command.
+
 ### Fixed
 
 - Hide Termux's generated `u0_a…@localhost` identity by matching Agnoster against Zsh's

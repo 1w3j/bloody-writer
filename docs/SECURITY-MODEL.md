@@ -25,7 +25,8 @@ The installer never stores a sudo password or creates passwordless sudo.
 
 - Arch and Termux packages come from their configured repositories.
 - Oh My Zsh uses the reviewed commit in `versions.env`.
-- Neovim plugins use `lazy-lock.json` and are rebuilt locally for each architecture.
+- Neovim plugins are seeded from the reviewed `lazy-lock.json` into device-local state and rebuilt
+  locally for each architecture. Only the explicit maintainer helper writes the tracked lock.
 - Spell files and the Nerd Font use pinned SHA-256 checksums.
 - WSL Codex uses OpenAI's official standalone installer and release pin.
 - No unofficial Android Codex executable is installed.
