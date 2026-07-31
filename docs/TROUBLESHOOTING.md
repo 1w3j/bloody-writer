@@ -1,53 +1,97 @@
 # Troubleshooting
 
-## Installation stopped
-
-Run:
+## Installation paused or stopped
 
 ```bash
 bloody-writer status
 ./install.sh
 ```
 
-The first pending phase resumes.
+`status` prints the detected platform, phase state, and any manual checkpoint. Complete that
+Windows or Android action first; rerunning resumes the unfinished phase.
 
-## systemd is not PID 1
+## Wrong platform / running inside PRoot
 
-Confirm `/etc/wsl.conf` contains `systemd=true`, then from PowerShell:
+Run:
+
+```bash
+bloody-writer platform
+```
+
+Supported results are `Arch Linux on Windows WSL 2` and `Termux on Android`. On Android, run the
+installer from the main Termux prompt where `$PREFIX/bin/pkg` exists, not inside
+`proot-distro login archlinux`.
+
+## WSL systemd is not PID 1
+
+From Windows PowerShell:
 
 ```powershell
 wsl --terminate archlinux
 wsl --distribution archlinux
 ```
 
-Back in Arch:
+Back in Arch WSL:
 
 ```bash
 ps -p 1 -o comm=
-./install.sh
+cd ~/bloody-writer && ./install.sh
 ```
 
-## Git asks for the key passphrase every pull
+## Windows Terminal profile/font is missing
 
-Start a new Zsh or reload it:
+Close **every** Windows Terminal window, reopen it, and choose **Bloody Writer - Arch WSL**. If
+needed:
 
-```zsh
-source ~/.zshrc
-ssh-add -l
+```bash
+bloody-writer reset-phase 25-host-theme
+./install.sh --only 25-host-theme
 ```
 
-The first shell after a full WSL/Windows shutdown may ask once. Keychain then reuses the same
-agent across terminal tabs and tmux clients.
+See [`WINDOWS-TERMINAL.md`](WINDOWS-TERMINAL.md) for the fragment path and manual command.
 
-## `vim` is missing
+## Termux shared Documents is missing
 
-Bloody Writer maps `vim` to Neovim in interactive Zsh. Start or reload Zsh:
+```bash
+termux-setup-storage
+ls -ld ~/storage/shared ~/storage/shared/Documents
+```
+
+Grant Android file access, then reset/rerun phase 25. Some Android versions expose a settings
+screen instead of an inline dialog; return to Termux afterward.
+
+## Termux clipboard does not work
+
+Confirm the Termux:API Android app came from the same source as Termux, then:
+
+```bash
+printf 'clipboard test' | termux-clipboard-set
+termux-clipboard-get
+bloody-writer doctor
+```
+
+If the command times out or Android reports a signature/permission issue, reinstall both Termux
+apps from one source and rerun `25-host-theme`.
+
+## WSL clipboard does not work
+
+```bash
+printf 'clipboard test' | clip.exe
+powershell.exe -NoLogo -NoProfile -Command 'Get-Clipboard'
+```
+
+Inside Neovim, `Ctrl-c` copies, `Ctrl-v` pastes, and `Ctrl-q` preserves Visual Block on both
+platforms.
+
+## Git key passphrase repeats
 
 ```zsh
 exec zsh
+ssh-add -l
 ```
 
-Scripts should invoke `nvim` explicitly.
+The first shell after a complete WSL/Windows or Termux process restart may ask once. Keychain
+reuses the agent without storing the passphrase.
 
 ## Neovim plugin failure
 
@@ -56,67 +100,42 @@ bloody-writer reset-phase 50-neovim
 ./install.sh --only 50-neovim
 ```
 
-Then inside Neovim:
+Then run `:Lazy`, `:checkhealth`, and `:messages`. Never copy `.local/share/nvim/lazy`, Neovim
+state, or native plugin caches between Android and WSL architectures.
 
-```vim
-:Lazy
-:checkhealth
-:messages
-```
-
-Do not copy `.local/share/nvim/lazy`, `.local/state/nvim`, or `.cache/nvim` from Android or
-another CPU architecture.
-
-## LuaRocks warning
-
-The current plugin graph needs no LuaRocks packages. `init.lua` deliberately configures:
-
-```lua
-rocks = { enabled = false }
-```
-
-If a future plugin documents a LuaRocks dependency, remove that setting as part of the reviewed
-plugin update.
-
-## Clipboard does not work
-
-Outside Neovim:
+## `tma` picker or kill behavior
 
 ```bash
-printf 'clipboard test' | clip.exe
-powershell.exe -NoLogo -NoProfile -Command 'Get-Clipboard'
+tma --help
+tma --list
+tma --kill SESSION
 ```
 
-Inside Neovim, `Ctrl-c` copies, `Ctrl-v` pastes, and `Ctrl-q` preserves Visual Block.
+`Ctrl-X` in fzf and `k NUMBER` in the fallback menu both request confirmation. If a session
+disappears between listing and selection, rerun `tma`; exact-target validation refuses a different
+similarly named session.
 
-## tmux colors or icons are wrong
+## Termux cannot reach WSL
 
-Check:
-
-```bash
-echo "$TERM"
-tmux show -g default-terminal
-```
-
-Use JetBrainsMono Nerd Font Mono in Windows Terminal. Reload tmux with `Ctrl-a r`; existing
-servers may need to be restarted after major terminal capability changes.
-
-## `tma` says no sessions exist
-
-That is normal on a fresh server. Enter a new name or accept `main`. Later:
-
-```bash
-tma
-```
-
-will show every session.
-
-## Remote connection fails
+On Windows WSL:
 
 ```bash
 systemctl status tailscaled
 tailscale status
 tailscale ip -4
+tmux list-sessions
 ```
 
-Confirm Android Tailscale is connected to the same tailnet and the Windows host is awake.
+On Termux on Android, confirm the Tailscale Android app is connected, rerun
+`bloody-writer remote`, and test the explicit SSH command in [`REMOTE-ACCESS.md`](REMOTE-ACCESS.md).
+The Windows PC must be powered on, awake, and running WSL.
+
+## `vim` is missing
+
+Bloody Writer aliases `vim` to Neovim in interactive Zsh:
+
+```zsh
+exec zsh
+```
+
+Scripts should invoke `nvim` explicitly.

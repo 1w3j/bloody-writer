@@ -61,16 +61,40 @@ github_key_exists() {
 }
 
 printf 'Bloody Writer doctor — %s\n\n' "$BLOODY_WRITER_VERSION"
-check "Arch Linux" bw_is_arch
-check "WSL" bw_is_wsl
-check "systemd is PID 1" is_systemd
-check "core commands" has_commands zsh nvim tmux git gh rg fd fzf jq node npm pnpm python
+printf 'Platform: %s\n\n' "$(bw_platform_label)"
+case "$BW_PLATFORM" in
+wsl)
+  check "Arch Linux" bw_is_arch
+  check "Windows WSL 2" bw_is_wsl
+  check "systemd is PID 1" is_systemd
+  check "WSL core commands" has_commands zsh nvim tmux git gh rg fd fzf jq node npm pnpm python powershell.exe clip.exe
+  ;;
+termux)
+  check "Termux on Android" bw_is_termux
+  check "Termux core commands" has_commands zsh nvim tmux git gh rg fd fzf jq node npm python pkg
+  check "Android clipboard bridge" has_commands termux-clipboard-get termux-clipboard-set
+  warn_check "Android shared storage" test -d "$HOME/storage/shared"
+  warn_check "Termux Nerd Font" test -s "$HOME/.termux/font.ttf"
+  ;;
+*)
+  printf '  [FAIL] Unsupported environment; use Arch Linux on Windows WSL or Termux on Android.\n'
+  failures=$((failures + 1))
+  ;;
+esac
 check "Zsh configuration link" is_linked_to "$BW_REPO_ROOT/dotfiles/zsh/.zshrc" "$HOME/.zshrc"
 check "tmux configuration link" is_linked_to "$BW_REPO_ROOT/dotfiles/tmux/.tmux.conf" "$HOME/.tmux.conf"
 check "Neovim configuration link" is_linked_to "$BW_REPO_ROOT/dotfiles/nvim/.config/nvim" "$HOME/.config/nvim"
 check "tmux picker link" is_linked_to "$BW_REPO_ROOT/dotfiles/local-bin/.local/bin/tma" "$HOME/.local/bin/tma"
+check "clipboard helper link" is_linked_to "$BW_REPO_ROOT/dotfiles/local-bin/.local/bin/bw-clipboard-copy" "$HOME/.local/bin/bw-clipboard-copy"
 check "Bloody Writer command link" is_linked_to "$BW_REPO_ROOT/bin/bloody-writer" "$HOME/.local/bin/bloody-writer"
-warn_check "Codex authenticated" codex_logged_in
+case "$BW_PLATFORM" in
+wsl)
+  warn_check "Codex authenticated in WSL" codex_logged_in
+  ;;
+termux)
+  warn_check "Remote WSL host configured" test -n "${BLOODY_WRITER_WSL_HOST:-}"
+  ;;
+esac
 warn_check "GitHub CLI authenticated" github_logged_in
 warn_check "GitHub SSH key configured" github_key_exists
 warn_check "English spell file" test -s "$HOME/.local/share/nvim/site/spell/en.utf-8.spl"

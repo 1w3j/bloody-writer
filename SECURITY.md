@@ -21,5 +21,6 @@ Deleting a secret from the latest commit is not sufficient after it has been pub
 ## Installer trust
 
 Read `scripts/phases/` before running the installer on a sensitive machine. The project targets
-fresh Arch WSL instances, performs privileged work in foreground phases, and backs up conflicting
-dotfiles. See [the security model](docs/SECURITY-MODEL.md).
+fresh Arch Linux on Windows WSL and native Termux on Android. WSL performs privileged work only in
+foreground phases; Termux rejects root. Both paths back up conflicting dotfiles. See
+[the security model](docs/SECURITY-MODEL.md).

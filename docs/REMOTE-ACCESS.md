@@ -1,64 +1,106 @@
-# Remote access from Android Termux
+# Termux on Android → Windows WSL remote sessions
 
-Bloody Writer uses Tailscale SSH for the optional remote path. This avoids router port
-forwarding and does not expose the WSL SSH service to the public internet.
+The recommended mobile path is:
 
-## WSL side
+```text
+Termux terminal on Android
+        │
+        │ Tailscale SSH (private tailnet)
+        ▼
+Arch Linux on Windows WSL 2
+        │
+        └── tma → selected persistent tmux session → Neovim / shell / Codex
+```
 
-After the main installer and its WSL restart are complete:
+This does not expose router port 22. Attaching adds the phone/tablet as another tmux client and
+does not disconnect Windows Terminal.
+
+## 1. Prepare the Windows WSL host
+
+Finish the WSL installer and required restart, then in Arch Linux on Windows WSL:
 
 ```bash
 bloody-writer remote
 ```
 
-This installs Tailscale from Arch's package repository, enables `tailscaled`, and runs:
+The platform-aware command:
+
+1. Installs Tailscale from Arch's package repository.
+2. Enables `tailscaled` with systemd.
+3. Runs `sudo tailscale up --ssh` for an interactive tailnet login.
+4. Prints the WSL tailnet DNS name/IP and Linux username needed on Android.
+
+## 2. Prepare Termux on Android
+
+1. Install the Tailscale Android app.
+2. Sign in to the same tailnet as the WSL host.
+3. In the main Termux prompt, run:
 
 ```bash
-sudo tailscale up --ssh
+bloody-writer remote
 ```
 
-Complete the displayed tailnet authentication.
+Enter the WSL tailnet host/IP and WSL Linux username printed by step 1. Bloody Writer writes these
+device-local values to `~/.config/bloody-writer/settings.zsh` and creates no credential in Git.
 
-## Android side
-
-1. Install the official Tailscale Android app.
-2. Sign in to the same tailnet.
-3. In Termux:
+Start a new shell:
 
 ```bash
-pkg install openssh
-ssh -t your-linux-user@your-wsl-tailnet-name /home/your-linux-user/.local/bin/tma
+exec zsh
 ```
 
-`tma` displays each tmux session, its window count, attachment state, and creation time. Choosing
-an already attached session adds the phone as another tmux client; it does not disconnect the
-local terminal. The full remote path is intentional: SSH commands run in a non-interactive
-shell, which may not load the `~/.zshrc` entry that adds `~/.local/bin` to `PATH`.
+## 3. Attach daily
 
-Add a short Termux alias:
-
-```zsh
-alias wsl-writer='ssh -t your-linux-user@your-wsl-tailnet-name /home/your-linux-user/.local/bin/tma'
+```bash
+wsl-writer
 ```
 
-## Availability limits
+The command expands to a safe explicit SSH target and the absolute remote `tma` path. In the
+picker:
 
-tmux persists processes only while the WSL virtual machine exists. Remote access therefore
-requires:
+| Key | Result |
+|---|---|
+| `Enter` | Attach the selected WSL tmux session to this Termux terminal |
+| `Ctrl-X` | Display a destructive-action confirmation; `y` kills that exact session |
+| `Esc` | Cancel without changing any session |
 
-- The Windows PC to be powered on.
-- Windows not to be sleeping or hibernating.
-- WSL to be running.
-- Tailscale to be connected on both devices.
+If `fzf` is unavailable, the fallback menu uses `NUMBER` to attach and `k NUMBER` to request a
+confirmed kill.
 
-Windows may stop an idle WSL instance. For unattended availability, use an owner-reviewed
-Windows startup task and power policy appropriate for the device. Bloody Writer does not change
-host power settings automatically.
+## What persists
 
-## Security
+tmux persists work while the **WSL virtual machine is running**. Remote availability requires:
 
-- Do not open or forward TCP port 22 on the home router.
-- Keep Tailscale device approval and account MFA enabled.
-- Revoke a lost phone from the tailnet immediately.
-- Do not disable Tailscale key expiry unless the availability tradeoff is intentional.
+- The Windows PC is powered on.
+- Windows is awake, not sleeping or hibernating.
+- WSL is running.
+- Tailscale is connected on both devices.
+- Tailnet SSH policy permits the user/device.
+
+Bloody Writer does not silently change Windows power policy or create an always-on scheduled task.
+Those host decisions affect energy use and security and remain owner-controlled.
+
+## Direct command for troubleshooting
+
+If the `wsl-writer` function is not loaded, use:
+
+```bash
+ssh -t WSL_USER@WSL_TAILNET_HOST /home/WSL_USER/.local/bin/tma
+```
+
+Then inspect the saved values:
+
+```bash
+grep 'BLOODY_WRITER_WSL_' ~/.config/bloody-writer/settings.zsh
+```
+
+Rerun `bloody-writer remote` in Termux to replace them safely.
+
+## Security checklist
+
+- Do not forward public TCP port 22 on the router.
+- Keep Tailscale account MFA and device approval enabled.
 - Review tailnet SSH access rules before adding other users.
+- Revoke a lost Android device immediately.
+- Keep the WSL GitHub private key passphrase-protected.
+- Remember that killing a tmux session ends every process in it; `tma` confirmation is deliberate.

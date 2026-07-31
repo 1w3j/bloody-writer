@@ -1,4 +1,4 @@
-require("writer.wsl")
+require("writer.platform")
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 vim.g.loaded_perl_provider = 0

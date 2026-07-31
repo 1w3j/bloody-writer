@@ -3,6 +3,11 @@
 phase_10_system() {
   [[ $BW_TEST_MODE == 1 ]] && return 0
 
+  if [[ $BW_PLATFORM == termux ]]; then
+    bw_note "Android owns init, storage, and app permissions; no system files are changed in Termux."
+    return 0
+  fi
+
   local init_name
   init_name="$(ps -p 1 -o comm= 2>/dev/null | tr -d '[:space:]')"
 

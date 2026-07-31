@@ -1,48 +1,101 @@
-# Bloody Writer
+<p align="center">
+  <img src="assets/brand/bloody-writer-logo.png" width="210" alt="Bloody Writer pen-nib and terminal logo">
+</p>
 
-An opinionated, reproducible **Arch Linux on WSL 2** terminal workspace with a true-black,
-blood-red, and warm-white visual language.
+<h1 align="center">Bloody Writer</h1>
 
-Bloody Writer recreates the maintained configuration snapshot—not private machine state. It
-installs Zsh, Oh My Zsh with Agnoster, Neovim, tmux, Codex CLI, Git/GitHub tooling, language
-servers, formatters, spell files, and an optional private phone-to-WSL remote workflow.
+<p align="center">
+  <strong>Write boldly. Resume safely.</strong><br>
+  One dark red terminal workspace for Arch Linux on Windows WSL 2 and Termux on Android.
+</p>
 
-> **Theme palette:** `#000000` background · `#FFF1F1` foreground · `#B00020` blood red ·
-> `#FF334D` bright red · `#7A0014` selection
+<p align="center">
+  <a href="https://github.com/1w3j/bloody-writer/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/1w3j/bloody-writer/ci.yml?branch=main&style=flat-square&label=tests"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-B00020?style=flat-square"></a>
+  <img alt="Windows WSL 2" src="https://img.shields.io/badge/Windows-WSL%202-FF334D?style=flat-square">
+  <img alt="Termux on Android" src="https://img.shields.io/badge/Android-Termux-000000?style=flat-square">
+</p>
+
+<p align="center">
+  <img src="assets/screenshots/wsl-hero.png" width="100%" alt="Bloody Writer running tmux and Neovim in Arch Linux on Windows WSL">
+</p>
+
+Bloody Writer turns a fresh terminal into a maintained writing and coding workstation. It brings
+together Zsh, Oh My Zsh, tmux, Neovim, GitHub, SSH, language tools, documentation, and a
+resumable installer—without copying passwords, private keys, tokens, projects, or machine state.
+
+Like Oh My Zsh, the repository is both a configuration framework and a living source of truth.
+Unlike a shell-only framework, Bloody Writer manages the complete terminal experience and knows
+which host it is running on.
+
+> [!IMPORTANT]
+> Read the platform notes and inspect `scripts/phases/` before installing. The WSL path performs
+> visible `sudo` operations; the Termux on Android path never requires root.
+
+<details>
+<summary><strong>Table of contents</strong></summary>
+
+- [What you get](#what-you-get)
+- [Platform support](#platform-support)
+- [Install on Windows WSL](#install-on-windows-wsl)
+- [Install in Termux on Android](#install-in-termux-on-android)
+- [Pause, fix, and resume](#pause-fix-and-resume)
+- [Daily commands](#daily-commands)
+- [Showcase](#showcase)
+- [Updates and customization](#updates-and-customization)
+- [Security boundary](#security-boundary)
+- [Documentation](#documentation)
+
+</details>
 
 ## What you get
 
-- A portable Zsh/Agnoster prompt with the Bloody Writer red path segment.
-- A locked Neovim writing and coding environment with:
-  - Markdown rendering, navigation, task cycling, formatting, and Zen mode.
-  - English and Spanish spelling.
-  - NvimTree, Telescope, Blink completion, LSP, Git signs, and a custom theme.
-  - A responsive in-editor quick reference opened with `Space ?`.
-- A matching tmux workspace using `Ctrl-a`, mouse support, Windows clipboard copy mode, and
-  the interactive `tma` session picker.
-- Codex CLI installed from OpenAI's standalone installer into the Linux user profile.
-- GitHub CLI, a dedicated passphrase-protected SSH key, and keychain reuse.
-- Resumable phases, automatic pre-change backups, diagnostics, update commands, and
-  operational documentation.
-- Optional Tailscale SSH access from Android Termux without exposing port 22 publicly.
+| Layer | Capability |
+|---|---|
+| **Shell** | Zsh, pinned Oh My Zsh, Agnoster, portable aliases, keychain, true-black/red prompt |
+| **Writer Neovim** | Markdown rendering, Zen mode, English/Spanish spelling, LSP, completion, Git signs, file tree, Telescope, formatting |
+| **Live guide** | Responsive `Space ?` cheat sheet that becomes a centered overlay on narrow screens |
+| **tmux** | `Ctrl-a`, true color, mouse, platform clipboard, persistent work, multi-client attach |
+| **`tma` picker** | List and attach any session; `Ctrl-X` safely kills a selected session after confirmation |
+| **GitHub + SSH** | GitHub CLI login, dedicated passphrase-protected key, public-key upload, agent reuse |
+| **Codex** | Pinned official CLI in WSL; supported remote WSL workflow from Termux on Android |
+| **Operations** | Install/resume, status, doctor, update, backup, restore, remote setup, tests, and practical documentation |
+| **Visual host layer** | Windows Terminal profile and Nerd Font on Windows; colors and Nerd Font inside Termux |
 
-## Quick start
+The palette is `#000000` true black, `#FFF1F1` warm white, `#B00020` blood red, and
+`#FF334D` bright red. Terminal ANSI green is deliberately mapped to red; Neovim retains a
+separate semantic green where meaning and readability require it.
 
-### 1. Install Arch Linux on WSL
+## Platform support
+
+| Environment | Status | Installation result |
+|---|---:|---|
+| **Arch Linux on Windows WSL 2** | ✅ Full | Complete local workstation, Windows Terminal profile, native Linux Codex CLI |
+| **Termux app on Android** | ✅ Full mobile | Native Zsh, tmux, Neovim, Git/GitHub/SSH, Android clipboard/storage, Termux theme |
+| **Termux on Android → WSL over Tailscale SSH** | ✅ Recommended | Phone or tablet attaches to persistent WSL tmux sessions and uses WSL Codex |
+| **Arch inside Termux PRoot** | ◐ Optional companion | `proot-distro` is installed, but run this installer from the main Termux prompt |
+| Native desktop Linux, macOS, other WSL distros | ❌ Guarded | Installer stops before modifying the system |
+
+OpenAI does not publish an Android Codex CLI build. Bloody Writer therefore does not download an
+unofficial binary or weaken Android security; Termux uses the supported Codex process running in
+WSL through SSH and tmux.
+
+## Install on Windows WSL
+
+### 1. Install Arch Linux on Windows
 
 Open **PowerShell as Administrator**:
 
 ```powershell
-wsl --install -d archlinux
+wsl --install --distribution archlinux
 ```
 
-If Windows asks for a reboot, reboot and run the command again. The optional
-[`windows/bootstrap-wsl.ps1`](windows/bootstrap-wsl.ps1) performs the same checks and is safe
-to rerun.
+Restart Windows if requested. The repository also contains a rerunnable Windows helper at
+[`windows/bootstrap-wsl.ps1`](windows/bootstrap-wsl.ps1).
 
-### 2. Clone from the first Arch shell
+### 2. Clone and run from the first Arch shell
 
-The first official Arch WSL shell may open as `root`:
+The official fresh Arch WSL shell can initially open as `root`:
 
 ```bash
 pacman -Syu --needed git
@@ -51,100 +104,146 @@ cd bloody-writer
 ./install.sh
 ```
 
-When run as root, the installer switches into the one-time user bootstrap. It creates a normal
-user, enables `wheel` sudo access, configures systemd and WSL defaults, and copies the clone
-into the new user's home.
-
-Run the displayed `wsl --terminate ...` command from PowerShell, reopen Arch, then:
+The root bootstrap creates a normal user, enables wheel `sudo`, configures systemd and WSL
+interop, and preserves the clone. Follow the displayed PowerShell restart command, reopen Arch,
+then resume:
 
 ```bash
 cd ~/bloody-writer
 ./install.sh
 ```
 
-The same command resumes at the first unfinished phase after every restart or interruption.
+The host-theme phase installs a pinned Nerd Font for the current Windows user and adds a separate
+**Bloody Writer - Arch WSL** Windows Terminal profile through a fragment. It does not rewrite
+`settings.json` or alter existing profiles.
 
-### 3. Finish interactive authentication
+## Install in Termux on Android
 
-The installer may open these user-owned flows:
+Install a current **Termux** app from F-Droid or the official GitHub releases. Install the
+**Termux:API** companion from the same source—F-Droid and GitHub-signed Termux apps cannot be
+mixed.
 
-- Codex device authentication.
-- GitHub browser authentication.
-- An SSH-key passphrase prompt.
+From the main Termux prompt (not from inside `proot-distro`):
 
-Passwords, tokens, private keys, Codex sessions, and authentication files are never stored in
-this repository.
+```bash
+pkg update
+pkg install git
+git clone https://github.com/1w3j/bloody-writer.git
+cd bloody-writer
+./install.sh
+```
+
+The installer detects Termux automatically. It uses `pkg`, keeps all work under the Android app
+user, requests shared-storage permission, installs Termux colors/font, configures the Android
+clipboard bridge, and links Writer to shared `Documents`. No `sudo`, Android root, or WSL flag is
+needed.
+
+After both devices are installed, configure the private Termux-to-WSL path:
+
+```bash
+# Run once in WSL, then once in Termux on Android:
+bloody-writer remote
+
+# Daily use from the phone or tablet:
+wsl-writer
+```
+
+See [Termux on Android](docs/TERMUX-ANDROID.md) and
+[remote WSL access](docs/REMOTE-ACCESS.md) for the exact two-device workflow.
+
+## Pause, fix, and resume
+
+The installer is phase-based and records completed work under
+`~/.local/state/bloody-writer/completed/`. It deliberately pauses when the operating system owns
+the next action, for example:
+
+- Windows must terminate WSL so systemd can become PID 1.
+- Windows Terminal must close and reopen after its font/profile is installed.
+- Android must grant Termux shared-storage permission.
+- The Termux:API Android companion app must be installed from the matching source.
+
+At a pause, read the numbered instructions, complete the one manual action, and rerun:
+
+```bash
+./install.sh
+```
+
+The unfinished phase verifies the condition and continues; earlier phases are not repeated.
 
 ## Daily commands
 
 | Command | Purpose |
 |---|---|
-| `./install.sh` | Install or resume unfinished phases |
-| `bloody-writer status` | Show completed and pending phases |
-| `bloody-writer doctor` | Diagnose the installed workspace |
-| `bloody-writer update` | Fast-forward the repo and reapply changed layers |
-| `bloody-writer backup` | Archive the managed configuration |
-| `bloody-writer restore` | Restore the latest pre-install dotfile backup |
-| `bloody-writer remote` | Opt in to private Tailscale SSH |
-| `tma` | Choose and attach to a tmux session |
-| `writer` | Open `~/Documents` in Writer Neovim |
+| `./install.sh --help` | Friendly install options, phases, platform behavior, and examples |
+| `./install.sh` | Install or resume at the first unfinished phase |
+| `bloody-writer status` | Show detected platform, completed phases, and manual checkpoint text |
+| `bloody-writer doctor` | Diagnose the local WSL or Termux installation |
+| `bloody-writer update` | Require a clean checkout, fast-forward, and reapply changed layers |
+| `bloody-writer backup` | Archive managed configuration without credentials |
+| `bloody-writer restore` | Restore the latest automatic pre-install backup |
+| `bloody-writer remote` | Configure WSL as host or Termux on Android as client automatically |
+| `writer` | Open the configured Documents directory in Writer Neovim |
+| `tma --help` | Explain attach/create/kill behavior and picker keys |
+| `tma` | Select a local or remote tmux session |
 
-## Restart and resume model
+## Showcase
 
-Each successful phase writes a small marker under:
+<table>
+  <tr>
+    <td width="55%"><img src="assets/screenshots/wsl-cheatsheet.png" alt="Responsive Bloody Writer Neovim cheat sheet"></td>
+    <td width="45%"><img src="assets/screenshots/tmux-session-picker.png" alt="Bloody Writer tma tmux session picker"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Responsive in-editor guide</strong><br><code>Space ?</code> keeps commands close while writing.</td>
+    <td align="center"><strong>Persistent session control</strong><br>Enter attaches; Ctrl-X asks before killing.</td>
+  </tr>
+</table>
 
-```text
-~/.local/state/bloody-writer/completed/
+## Updates and customization
+
+```bash
+cd ~/bloody-writer
+bloody-writer update
 ```
 
-If WSL must restart, the current phase remains incomplete. After `wsl --terminate` and a new
-Arch shell, rerunning `./install.sh` verifies the restart and continues. A failed or cancelled
-phase behaves the same way; completed work is not repeated.
+The update refuses a dirty checkout and uses `git pull --ff-only`. If this is your own fork,
+change the palette, plugins, packages, commands, or documentation through reviewed Git changes,
+then run the focused phase or normal installer.
 
-See [Installation and phases](docs/INSTALL.md) for options such as `--dry-run`, `--only`, and
-`--skip-github`.
+The complete contributor-facing map—including real palette, alias, package, Neovim plugin,
+screenshot, commit, and push examples—is in
+**[Customizing and publishing your theme](docs/CUSTOMIZING.md)**.
 
-## Reproducibility boundary
+## Security boundary
 
-Bloody Writer reproduces the configuration and pinned application layers that are safe to
-publish. It is deliberately not a disk image:
-
-| Tracked or pinned | Recreated locally | Never copied |
+| Tracked or pinned | Recreated for each device | Never copied or committed |
 |---|---|---|
-| Dotfiles and palette | Arch packages | Private SSH keys |
-| Neovim lockfile | Plugin downloads | GitHub/Codex tokens |
-| Oh My Zsh commit | Spell files | Shell history |
-| Codex release | Git identity prompts | Caches and logs |
-| Installer behavior | User paths and services | Projects and documents |
+| Dotfiles, scripts, palette, docs | Packages and plugin downloads | Private SSH keys and passphrases |
+| Neovim lockfile | Font and spell files | GitHub/Codex tokens and sessions |
+| Oh My Zsh/Codex/font versions | Git identity and public-key registration | Shell history, projects, Documents |
+| Public screenshots and logo | OS permissions and service state | Caches, logs, personal absolute paths |
 
-Arch is rolling release software, so repository packages are installed from the current Arch
-repositories. `versions.env` pins the layers where deterministic pinning is practical.
+Every authentication flow stays interactive and user-owned. Remote access uses Tailscale SSH;
+the project does not open router port 22, disable authentication, or change host power policy.
+Read [the security model](docs/SECURITY-MODEL.md) before using the installer on a sensitive
+machine.
 
 ## Documentation
 
-- [Installation and phases](docs/INSTALL.md)
-- [Workspace cheat sheet](docs/CHEATSHEET.md)
-- [Configuration map](docs/CONFIGURATION.md)
-- [Snapshot record](docs/SNAPSHOT.md)
+- [Installation, options, phases, and checkpoints](docs/INSTALL.md)
+- [What is installed and daily operations cheat sheet](docs/CHEATSHEET.md)
+- [Termux on Android installation](docs/TERMUX-ANDROID.md)
+- [Termux on Android → Windows WSL remote access](docs/REMOTE-ACCESS.md)
+- [Customizing and publishing your own theme](docs/CUSTOMIZING.md)
+- [Configuration and personal-settings map](docs/CONFIGURATION.md)
 - [Architecture and state model](docs/ARCHITECTURE.md)
-- [Windows Terminal and font](docs/WINDOWS-TERMINAL.md)
-- [Phone and remote access](docs/REMOTE-ACCESS.md)
+- [Windows Terminal host layer](docs/WINDOWS-TERMINAL.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Maintenance and releases](docs/MAINTENANCE.md)
-- [Security model](docs/SECURITY-MODEL.md)
-- [Upstream sources](docs/SOURCES.md)
-
-## Platform scope
-
-The supported target is:
-
-```text
-Windows 11 → WSL 2 → Arch Linux → Zsh → tmux → Neovim / Codex
-```
-
-Native Linux and Termux configuration files are useful references, but the installer currently
-refuses unsupported platforms rather than partially modifying them.
+- [Snapshot record](docs/SNAPSHOT.md)
+- [Upstream primary sources](docs/SOURCES.md)
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) · Created for writers and terminal people who prefer their tools dark, sharp, and
+recoverable.

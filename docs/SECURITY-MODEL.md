@@ -2,40 +2,48 @@
 
 ## Public-repository rule
 
-This repository may contain configuration and public upstream identifiers. It must never contain:
+This repository may contain configuration, public screenshots, and upstream identifiers. It must
+never contain private SSH keys/passphrases, access tokens, Codex authentication/sessions/state,
+GitHub CLI `hosts.yml`, histories, downloaded caches, personal documents, private repositories,
+customer data, or machine-specific paths.
 
-- Private SSH keys or passphrases.
-- GitHub, OpenAI, npm, or other access tokens.
-- Codex `auth.json`, installation IDs, state databases, session logs, or attachments.
-- GitHub CLI `hosts.yml`.
-- Shell history, known-host history, caches, or downloaded plugin state.
-- Personal documents, private repositories, customer data, or machine-specific paths.
-
-The automated secret scan in `tests/security-scan.sh` rejects common credential formats and
-known personal snapshot paths.
+`tests/security-scan.sh` rejects common credential formats and known personal snapshot paths.
+Humans must also inspect screenshot pixels; text scans cannot see visual leaks.
 
 ## Privilege boundary
 
-Only system and package phases use sudo. Dotfiles, plugins, SSH keys, Codex state, and GitHub
-configuration remain owned by the normal user.
+| Environment | Boundary |
+|---|---|
+| Arch Linux on Windows WSL | Root bootstrap plus explicit system/package `sudo`; dotfiles, keys, Codex, and GitHub remain normal-user owned |
+| Termux on Android | Root is rejected; `pkg` and all files run as the Android app user; no `sudo` |
+| Windows host | PowerShell helper installs a current-user font/fragment; it does not rewrite global Terminal settings |
+| Android host | Permission/app checkpoints remain Android-owned and require visible user action |
 
-Commands requiring sudo are visible in phase scripts and run in the foreground. The installer
-does not store a sudo password or create passwordless sudo.
+The installer never stores a sudo password or creates passwordless sudo.
 
 ## Download boundary
 
-- Arch packages come from configured pacman repositories.
-- Oh My Zsh is checked out at the commit in `versions.env`.
-- Neovim plugins are locked by `lazy-lock.json`.
-- Spell files are verified with SHA-256.
-- Codex is installed by OpenAI's official standalone installer, which verifies release digests.
+- Arch and Termux packages come from their configured repositories.
+- Oh My Zsh uses the reviewed commit in `versions.env`.
+- Neovim plugins use `lazy-lock.json` and are rebuilt locally for each architecture.
+- Spell files and the Nerd Font use pinned SHA-256 checksums.
+- WSL Codex uses OpenAI's official standalone installer and release pin.
+- No unofficial Android Codex executable is installed.
 
 Review upstream changes before updating pins.
 
-## Existing data
+## Existing data and destructive actions
 
-Conflicting dotfiles are moved to a timestamped backup before symlinks are created. The updater
-requires a clean Git checkout and uses fast-forward-only pulls.
+Conflicting managed paths move into a timestamped backup before symlinks are created. Restore
+validates targets under the expected home/state roots. Updates require a clean checkout and use
+fast-forward-only pulls.
 
-The root bootstrap is intentionally limited to a fresh Arch WSL instance. It never unregisters
-a distribution, changes Windows power policy, or automatically terminates WSL.
+`tma` attach is non-destructive. Killing a session ends every process inside it, so both the fzf
+and fallback paths show an explicit one-key confirmation and use an exact tmux target.
+
+## Remote boundary
+
+Tailscale SSH is opt-in and does not open the router's public port 22. Bloody Writer does not alter
+Windows power settings, silently create an always-on task, weaken SSH policy, or migrate private
+keys between Android and WSL. Tailnet identity, ACL/SSH rules, device revocation, and host uptime
+remain user-controlled.

@@ -1,6 +1,7 @@
 # Snapshot record
 
-Bloody Writer 0.1.0 was curated from the working Arch WSL environment on 2026-07-31.
+Bloody Writer 0.2.0 was curated from the working Arch WSL environment and the original
+Termux/Android workflow on 2026-07-31.
 This record describes the observed baseline; the installer follows current Arch repositories
 for rolling packages.
 
@@ -41,18 +42,21 @@ for rolling packages.
 ## Configuration included
 
 - Current custom Neovim configuration and its 17-entry `lazy-lock.json`.
-- The WSL-specific clipboard layer and responsive `Space ?` guide.
+- The Windows WSL / Termux on Android clipboard layer and responsive `Space ?` guide.
 - Current Bloody Writer tmux theme and `tma` session picker.
 - A portable equivalent of the current Zsh/Agnoster theme and aliases.
 - Windows Terminal's evolved palette, including red ANSI highlight slots.
 - Safe Codex sandbox defaults and pinned standalone CLI release.
 - GitHub/SSH/keychain behavior recreated without copying credentials.
+- Native Termux on Android package/theme/clipboard/storage support and remote WSL session flow.
+- Verified JetBrainsMono Nerd Font Mono 3.4.0 for both Windows and Termux host layers.
 
 ## Historical decisions retained
 
 - Plugins are rebuilt for WSL x86-64; Android/Termux plugin caches are never copied.
 - LuaRocks integration is disabled while no locked plugin needs it.
-- `Ctrl-c` and `Ctrl-v` use the Windows clipboard; Visual Block moved to `Ctrl-q`.
+- `Ctrl-c` and `Ctrl-v` use the detected Windows or Android clipboard; Visual Block moved to
+  `Ctrl-q`.
 - NvimTree selection uses high-contrast white on `#52000E`.
 - The quick reference becomes a centered overlay below 140 columns.
 - `vim` intentionally resolves to the same Neovim writer environment.
