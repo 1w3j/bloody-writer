@@ -28,6 +28,8 @@ All notable changes to Bloody Writer are documented here.
 
 ### Fixed
 
+- Make the managed Zsh command path explicit and deduplicated on both WSL and Termux, with a
+  regression check proving `bloody-writer` resolves through `~/.local/bin` after installation.
 - Hide Termux's generated `u0_a…@localhost` identity by matching Agnoster against Zsh's
   authoritative `USERNAME` parameter instead of the potentially different inherited `USER` value.
 - Tell Termux users to close and reopen the app only after every installation phase completes

@@ -15,6 +15,11 @@
 Managed files are symlinks into the Git clone so a reviewed pull becomes the maintained source.
 The linker backs up any conflicting pre-existing target first.
 
+The managed `~/.zshrc` places `~/.local/bin` first in Zsh's deduplicated `path` array. This makes
+`bloody-writer`, `tma`, and the clipboard helper available by their short names after phase
+`40-dotfiles` completes and a new Zsh session starts. Workspace-profile JSON does not modify
+`PATH` or personal dotfiles; those remain responsibilities of the portable Bloody Writer base.
+
 ## Private local settings
 
 The installer creates but never tracks:

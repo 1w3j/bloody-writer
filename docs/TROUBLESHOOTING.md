@@ -1,5 +1,26 @@
 # Troubleshooting
 
+## `zsh: command not found: bloody-writer`
+
+Before the base dotfile phase has completed, run the repository entrypoint directly:
+
+```bash
+cd ~/bloody-writer
+./install.sh
+```
+
+Phase `40-dotfiles` links the command into `~/.local/bin` and installs the managed Zsh
+configuration that places that directory first in `PATH`. After a successful installation, start
+a fresh shell with `exec zsh` (or fully reopen Termux on Android). Verify with:
+
+```zsh
+command -v bloody-writer
+bloody-writer status
+```
+
+The first command should print `~/.local/bin/bloody-writer`. Project workspace profiles do not
+edit `~/.zshrc`; apply them only after the base installation is complete.
+
 ## Installation paused or stopped
 
 ```bash

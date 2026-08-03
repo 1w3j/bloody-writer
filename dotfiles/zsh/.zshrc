@@ -1,6 +1,11 @@
 # Bloody Writer — portable shell configuration for Windows WSL and Android Termux
 export ZSH="$HOME/.oh-my-zsh"
-export PATH="$HOME/.local/bin:$PATH"
+
+# Bloody Writer installs its user commands here on both WSL and Termux. Zsh's tied `path`
+# array keeps the directory first and removes duplicates when this file is reloaded.
+typeset -U path PATH
+path=("$HOME/.local/bin" $path)
+export PATH
 
 ZSH_THEME="agnoster"
 plugins=(
