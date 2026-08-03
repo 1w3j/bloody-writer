@@ -61,6 +61,15 @@ printf 'pnpm TMPDIR=%s' "${TMPDIR:-}" >>"$BW_TEST_COMMAND_LOG"
 printf ' <%s>' "$@" >>"$BW_TEST_COMMAND_LOG"
 printf '\n' >>"$BW_TEST_COMMAND_LOG"
 EOF
+cat >"$fake_bin/node" <<'EOF'
+#!/usr/bin/env bash
+if [[ ${1:-} == --version ]]; then
+  printf 'v24.18.0\n'
+  exit 0
+fi
+printf 'Unexpected fake Node invocation in workspace test.\n' >&2
+exit 64
+EOF
 cat >"$fake_bin/php" <<'EOF'
 #!/usr/bin/env bash
 if [[ ${1:-} == -m ]]; then
