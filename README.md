@@ -29,8 +29,10 @@ Unlike a shell-only framework, Bloody Writer manages the complete terminal exper
 which host it is running on.
 
 > [!IMPORTANT]
-> Read the platform notes and inspect `scripts/phases/` before installing. The WSL path performs
-> visible `sudo` operations; the Termux on Android path never requires root.
+> The Arch WSL installer is designed and supported primarily for **fresh WSL instances**. Running
+> it on an existing configured Arch installation is at your own risk: make a backup, begin with
+> `./install.sh --dry-run`, and review every replacement and `sudo` operation. The Termux on
+> Android path never requires root.
 
 <details>
 <summary><strong>Table of contents</strong></summary>
@@ -43,6 +45,7 @@ which host it is running on.
 - [Daily commands](#daily-commands)
 - [Showcase](#showcase)
 - [Updates and customization](#updates-and-customization)
+- [Project workspace profiles](#project-workspace-profiles)
 - [Working with AI agents](#working-with-ai-agents)
 - [Security boundary](#security-boundary)
 - [Documentation](#documentation)
@@ -61,6 +64,7 @@ which host it is running on.
 | **GitHub + SSH** | GitHub CLI login, dedicated passphrase-protected key, public-key upload, agent reuse |
 | **Codex** | Pinned official CLI in WSL; supported remote WSL workflow from Termux on Android |
 | **Operations** | Install/resume, status, doctor, update, backup, restore, remote setup, tests, and practical documentation |
+| **Workspace profiles** | Strict, project-owned JSON can add reproducible Arch WSL tools and guarded setup without migrating secrets |
 | **Visual host layer** | Windows Terminal profile and Nerd Font on Windows; colors and Nerd Font inside Termux |
 
 The palette is `#000000` true black, `#FFF1F1` warm white, `#B00020` blood red, and
@@ -217,6 +221,29 @@ The complete contributor-facing map—including real palette, alias, package, Ne
 screenshot, commit, and push examples—is in
 **[Customizing and publishing your theme](docs/CUSTOMIZING.md)**.
 
+## Project workspace profiles
+
+Bloody Writer 0.3.0 can layer an approved project workspace on top of the terminal experience.
+The profile remains in the project repository, describes reproducible packages, version inputs,
+reviewed system fragments, guarded setup/verification commands, and loopback ports, and never
+contains credentials or machine identity.
+
+```bash
+# After the base installation and private-repository authentication:
+gh repo clone OWNER/PRIVATE-PROJECT ~/projects/PRIVATE-PROJECT
+bloody-writer workspace validate ~/projects/PRIVATE-PROJECT/bloody-writer.workspace.json
+bloody-writer install --workspace ~/projects/PRIVATE-PROJECT/bloody-writer.workspace.json
+
+# Later:
+bloody-writer workspace status
+bloody-writer workspace resume --yes
+```
+
+Profiles are intentionally available only on **Arch Linux under Windows WSL 2**. The Bloody
+Writer base remains fully supported in **Termux on Android**, but `workspace` commands stop there
+before mutation. See [workspace profiles](docs/WORKSPACE-PROFILES.md) for the schema, scanner,
+fresh-machine flow, trust boundary, state, and authoring checklist.
+
 ## Working with AI agents
 
 The root [`AGENTS.md`](AGENTS.md) gives compatible coding agents a repository-wide safety and
@@ -255,6 +282,7 @@ machine.
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Maintenance and releases](docs/MAINTENANCE.md)
 - [AI-agent and human maintainer guide](docs/AI-MAINTAINERS.md)
+- [Project workspace profiles](docs/WORKSPACE-PROFILES.md)
 - [Snapshot record](docs/SNAPSHOT.md)
 - [Upstream primary sources](docs/SOURCES.md)
 

@@ -36,7 +36,7 @@ if [[ $target_user == root ]]; then
   exit 1
 fi
 
-pacman -Syu --needed base-devel curl git sudo zsh
+pacman -Syu --needed base-devel curl git jq sudo zsh
 
 if ! id "$target_user" >/dev/null 2>&1; then
   useradd --create-home --groups wheel --shell /usr/bin/zsh "$target_user"

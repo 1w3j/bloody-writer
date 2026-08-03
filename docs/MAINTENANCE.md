@@ -18,6 +18,20 @@ only change, update now preserves the previous bytes and a binary patch under
 an extra command. Staged changes or any unknown/authored file remain untouched; the updater lists
 them and stops so the maintainer can commit or stash them deliberately.
 
+Base updates do not rerun an active project profile unless `--workspace FILE` is supplied. They
+report the active profile/digest/phase state so project setup is never repeated unexpectedly.
+
+## Workspace profile maintenance
+
+Read [`WORKSPACE-PROFILES.md`](WORKSPACE-PROFILES.md) before changing the schema or engine. Keep
+the schema, exact-key parser, CLI help, architecture/security docs, and focused tests synchronized.
+A new schema version needs an explicit parser and compatibility decision. Never add a generic
+privileged destination or shell-string escape hatch.
+
+Project maintainers may generate a new candidate at a new output path, review the deterministic
+diff, change it to `approved` under their own governance, and commit the profile plus every
+referenced source. A changed digest deliberately starts a new resume/trust generation.
+
 ## Full customization workflow
 
 Use [`CUSTOMIZING.md`](CUSTOMIZING.md) for the visual file map, files never to touch, private local
@@ -63,4 +77,5 @@ git status --short
 
 Also verify a WSL dry run, a real Termux permission/clipboard path, Windows Terminal reload, remote
 `wsl-writer`, Neovim's `Space ?`, `tma` attach and confirmed kill, public image privacy, and matching
-`CHANGELOG.md`/`versions.env` versions.
+`CHANGELOG.md`/`versions.env` versions. For workspace changes, also validate a real approved
+profile, run its current-machine audit/dry-run, and complete a disposable fresh Arch WSL test.

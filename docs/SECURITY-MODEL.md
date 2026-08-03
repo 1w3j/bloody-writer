@@ -21,6 +21,22 @@ Humans must also inspect screenshot pixels; text scans cannot see visual leaks.
 
 The installer never stores a sudo password or creates passwordless sudo.
 
+## Workspace-profile trust boundary
+
+Workspace JSON is untrusted until it passes exact-key/type/value checks, is an approved profile
+inside a Git repository, and the user sees its project root, commit, and SHA-256 before confirming.
+Termux, root, non-Arch WSL, symlinked profiles/sources, path traversal, untracked sources, unsafe
+package names, unknown schema versions/keys, and unsupported destinations stop before mutation.
+
+Version 1 may write only PHP fragments under `/etc/php/conf.d/` through its defined adapter.
+Commands are structured argument arrays run directly, never shell expressions. Shell/privilege
+wrappers, path-qualified executables, and control characters are rejected, while Composer and
+Node package-manager indirection requires its tracked manifest to be regular and committed-clean.
+Before project
+setup, the installer reads only selected local guard values from `.env` without sourcing it; it
+requires `APP_ENV=local`, SQLite, and a loopback application URL, then preserves an existing
+SQLite database in private workspace state.
+
 ## Download boundary
 
 - Arch and Termux packages come from their configured repositories.
@@ -41,6 +57,11 @@ fast-forward-only pulls.
 
 `tma` attach is non-destructive. Killing a session ends every process inside it, so both the fzf
 and fallback paths show an explicit one-key confirmation and use an exact tmux target.
+
+Workspace scanning is deliberately curated rather than a home-directory snapshot. It never
+serializes `.env`, databases, ignored/private evidence, IDE state, credentials, Git identity,
+Codex/GitHub sessions, SSH keys, history, caches, dependencies, logs, tmux sessions, user/host
+identity, absolute home paths, or Obsidian destinations.
 
 ## Remote boundary
 

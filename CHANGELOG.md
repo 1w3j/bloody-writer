@@ -6,12 +6,20 @@ All notable changes to Bloody Writer are documented here.
 
 ### Added
 
+- Bloody Writer 0.3.0 workspace profiles: strict JSON schema/parser, curated scanner, audit,
+  WSL-only package/system/setup/verification phases, digest-keyed resume state, and private
+  system-file/SQLite recovery copies.
+- `bloody-writer install --workspace`, `workspace scan`, `validate`, `audit`, `apply`, `status`,
+  `resume`, and focused security/resume/scanner regression tests.
+- Global npm `neovim` provider in the base manifest so Neovim can use its Node host.
 - Root-agent onboarding and a human/AI maintenance guide with a reusable first prompt, repository
   map, task-specific document routing, stable future-upgrade contracts, and handoff template.
 - Explicit `scripts/update-neovim-lock.sh` maintainer workflow for reviewed plugin-pin changes.
 
 ### Changed
 
+- Root bootstrap now installs `jq`, and public guidance explicitly treats the Arch WSL installer
+  as fresh-instance-first while preserving complete base support in Termux on Android.
 - Normal Neovim sessions now use a device-local copy of the reviewed plugin lock, preventing
   runtime plugin operations from dirtying the Git checkout through the managed config symlink.
 - `bloody-writer update` now safely backs up and repairs known legacy Neovim lock drift, prints and

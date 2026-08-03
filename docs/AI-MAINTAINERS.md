@@ -68,6 +68,7 @@ state, downloads, credentials, and caches live outside it. Read the installed-st
 | tmux/remote phone workflow | `docs/REMOTE-ACCESS.md`, `tma`, tmux config, their focused tests |
 | Theme/palette/showcase | `docs/CUSTOMIZING.md`, every palette surface, README assets; inspect pixels manually |
 | Credentials, GitHub, SSH, Codex | `docs/SECURITY-MODEL.md`, relevant phase; never import private state |
+| Workspace profile, scanner, or project layer | `docs/WORKSPACE-PROFILES.md`, schema, `scripts/lib/workspace.sh`, `tests/test-workspace.sh` |
 
 Use `rg` to follow a command, variable, phase name, or palette value before expanding context.
 
@@ -93,6 +94,9 @@ Use `rg` to follow a command, variable, phase name, or palette value before expa
   competing agent instructions through subdirectories.
 - A fresh clone plus tracked documentation must be enough to understand the current system.
 - Keep CLI help, cheat sheets, detailed docs, tests, and implementation synchronized.
+- Treat project profiles as untrusted data: retain exact-key parsing, direct argument-array
+  execution, tracked-file checks, platform/root rejection, digest generations, and adapter-only
+  privileged writes. A future schema version requires an explicit parser and migration review.
 - Keep phases ordered, named, idempotent, and marked complete only after verification.
 - Preserve `git pull --ff-only` and the updater's freshly-pulled self-relaunch.
 - Add an automatic dirty-file repair only for deterministic generated drift, with an exact path,

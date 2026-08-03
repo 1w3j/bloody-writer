@@ -19,6 +19,7 @@ shellcheck -x "${shell_files[@]}"
 printf 'Parsing JSON...\n'
 jq empty terminal/bloody-writer.json
 jq empty dotfiles/nvim/.config/nvim/lazy-lock.json
+jq empty schemas/workspace-profile-v1.schema.json
 
 printf 'Checking package manifests...\n'
 for manifest in manifests/arch-packages.txt manifests/npm-globals.txt manifests/termux-packages.txt; do
@@ -33,7 +34,7 @@ for file in install.sh bin/bloody-writer scripts/bootstrap-root.sh scripts/docto
   dotfiles/local-bin/.local/bin/bw-clipboard-copy tests/test-platforms.sh \
   tests/test-powershell.sh tests/test-tma.sh tests/test-zsh-prompt.sh \
   tests/security-scan.sh tests/test-doc-links.sh tests/test-linker.sh tests/test-resume.sh \
-  tests/test-update.sh scripts/update-neovim-lock.sh; do
+  tests/test-update.sh tests/test-workspace.sh scripts/update-neovim-lock.sh; do
   [[ -x $file ]] || {
     printf 'Expected executable bit: %s\n' "$file" >&2
     exit 1
@@ -49,6 +50,7 @@ tests/test-tma.sh
 tests/test-zsh-prompt.sh
 tests/test-powershell.sh
 tests/test-update.sh
+tests/test-workspace.sh
 
 printf 'Checking public image assets...\n'
 for image in \
