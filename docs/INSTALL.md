@@ -21,6 +21,11 @@ platform flag is required. Unsupported environments stop during preflight before
 Review `scripts/phases/` before installing on a sensitive device. Account logins, passwords, and
 SSH-key passphrases remain interactive even with `--yes`.
 
+> [!WARNING]
+> The Arch WSL path is intended primarily for a fresh instance. On an existing configured Arch
+> WSL machine, first back up the system and run `./install.sh --dry-run`; continuing is at the
+> user's risk. Project workspace profiles add their own explicit trust prompt and backups.
+
 ## Friendly help
 
 ```bash
@@ -63,6 +68,7 @@ newly pulled installer relaunches itself before applying phases.
 | `--skip-github` | Leave phase 70 pending without creating identity or keys |
 | `--skip-codex` | Leave the Codex phase pending |
 | `--skip-codex-login` | Install Codex in WSL without launching device authentication |
+| `-w`, `--workspace FILE` | Apply or resume an approved project workspace after the base phases |
 
 Examples:
 
@@ -71,6 +77,7 @@ Examples:
 ./install.sh --yes --skip-github
 ./install.sh --only 90-verify
 ./install.sh --from 40-dotfiles
+bloody-writer install --workspace ~/projects/example/bloody-writer.workspace.json
 ```
 
 ## Pause and resume contract
@@ -146,6 +153,10 @@ The official first Arch shell may be root. Running `./install.sh` there delegate
 6. Stops before WSL termination and prints the exact resume commands.
 
 The Termux installer rejects root; Android root is never needed.
+
+For a private project, finish the normal-user GitHub/Codex authentication phase before cloning
+it. Bloody Writer never moves a private checkout or credentials out of `/root`. Follow the full
+sequence in [Workspace profiles](WORKSPACE-PROFILES.md).
 
 ## Backups and recovery
 

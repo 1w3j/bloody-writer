@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/1w3j/bloody-writer/main/schemas/workspace-profile-v1.schema.json",
+  "title": "Bloody Writer workspace profile version 1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "profile",
+    "platform",
+    "packages",
+    "versions",
+    "requirements",
+    "system_files",
+    "environment_guard",
+    "lifecycle",
+    "ports",
+    "capabilities"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema_version": { "const": 1 },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "display_name", "minimum_bloody_writer_version", "review_state"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,62}$" },
+        "display_name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "minimum_bloody_writer_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "review_state": { "enum": ["approved", "candidate"] }
+      }
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["distribution", "environment", "wsl_version"],
+      "properties": {
+        "distribution": { "const": "arch" },
+        "environment": { "const": "wsl" },
+        "wsl_version": { "const": 2 }
+      }
+    },
+    "packages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pacman", "npm_global"],
+      "properties": {
+        "pacman": { "$ref": "#/$defs/stringArray" },
+        "npm_global": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["php", "node", "pnpm"],
+      "properties": {
+        "php": { "$ref": "#/$defs/versionRequirement" },
+        "node": { "$ref": "#/$defs/versionRequirement" },
+        "pnpm": { "$ref": "#/$defs/versionRequirement" }
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binaries", "php_extensions"],
+      "properties": {
+        "binaries": { "$ref": "#/$defs/stringArray" },
+        "php_extensions": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "system_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["adapter", "source", "destination"],
+        "properties": {
+          "adapter": { "const": "php-conf" },
+          "source": { "type": "string", "minLength": 1 },
+          "destination": { "type": "string", "pattern": "^/etc/php/conf\\.d/[A-Za-z0-9._-]+\\.ini$" }
+        }
+      }
+    },
+    "environment_guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["app_env", "app_url_scope", "db_connection", "sqlite_backup"],
+      "properties": {
+        "app_env": { "const": "local" },
+        "app_url_scope": { "const": "loopback" },
+        "db_connection": { "const": "sqlite" },
+        "sqlite_backup": { "const": true }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["setup", "verify", "development"],
+      "properties": {
+        "setup": { "type": "array", "items": { "$ref": "#/$defs/command" } },
+        "verify": { "type": "array", "items": { "$ref": "#/$defs/command" } },
+        "development": { "$ref": "#/$defs/command" }
+      }
+    },
+    "ports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["host", "port", "purpose"],
+        "properties": {
+          "host": { "enum": ["127.0.0.1", "localhost", "::1"] },
+          "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+          "purpose": { "type": "string", "minLength": 1, "maxLength": 100 }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bloody_writer_base"],
+      "properties": { "bloody_writer_base": { "const": true } }
+    }
+  },
+  "$defs": {
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "versionRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "requirement"],
+      "properties": {
+        "source": { "type": "string", "minLength": 1 },
+        "requirement": { "type": "string", "minLength": 1 }
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["argv"],
+      "properties": {
+        "argv": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

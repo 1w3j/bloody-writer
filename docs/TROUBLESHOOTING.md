@@ -10,6 +10,35 @@ bloody-writer status
 `status` prints the detected platform, phase state, and any manual checkpoint. Complete that
 Windows or Android action first; rerunning resumes the unfinished phase.
 
+## Workspace profile is rejected
+
+```bash
+bloody-writer workspace validate /path/to/bloody-writer.workspace.json
+git -C /path/to/project status --short
+```
+
+The profile must be approved, tracked in the same Git repository as every referenced source, a
+regular file (not a symlink), schema version 1, sorted/unique, and free of unknown keys or unsafe
+paths. Generated scanner output is deliberately `candidate`; review and commit it before owner
+approval changes that field. Workspace profiles never run in Termux on Android, root, WSL 1,
+non-Arch WSL, or another Linux distribution.
+
+## Workspace setup stopped after packages or system files
+
+```bash
+bloody-writer workspace status
+bloody-writer workspace audit /path/to/bloody-writer.workspace.json
+bloody-writer workspace resume --yes
+```
+
+Failed phases do not receive completion markers. If `.env` exists, confirm it explicitly uses
+`APP_ENV=local`, `DB_CONNECTION=sqlite`, and a loopback `APP_URL`; the installer never sources the
+file. Existing system fragments and SQLite data are preserved under the active manifest's private
+workspace backup tree before replacement/migrations.
+
+If the profile changed, `status` shows a different current digest. Run `validate` and `apply`
+again to review/trust the new generation instead of editing local state.
+
 ## Wrong platform / running inside PRoot
 
 Run:

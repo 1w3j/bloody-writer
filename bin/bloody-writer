@@ -4,8 +4,10 @@ set -Eeuo pipefail
 resolved_self="$(readlink -f -- "${BASH_SOURCE[0]}")"
 BW_REPO_ROOT="$(cd -- "$(dirname -- "$resolved_self")/.." && pwd -P)"
 export BW_REPO_ROOT
-# shellcheck source=../scripts/lib/common.sh
+# shellcheck source=scripts/lib/common.sh
 source "$BW_REPO_ROOT/scripts/lib/common.sh"
+# shellcheck source=scripts/lib/workspace.sh
+source "$BW_REPO_ROOT/scripts/lib/workspace.sh"
 
 readonly BW_PHASES=(
   "00-preflight"
@@ -35,6 +37,7 @@ Usage:
   ./install.sh [options]
   bloody-writer install [options]
   bloody-writer update [options]
+  bloody-writer workspace COMMAND [options]
   bloody-writer status
   bloody-writer platform
   bloody-writer doctor
@@ -54,6 +57,7 @@ Install options:
   --skip-github         Defer Git identity, GitHub login, and GitHub SSH-key setup.
   --skip-codex          Defer the local Codex phase on WSL.
   --skip-codex-login    Install Codex on WSL but defer its login flow.
+  -w, --workspace FILE  Apply an approved project workspace after the base phases.
   -h, --help            Show this guide.
 
 Automatic platform behavior:
@@ -78,6 +82,8 @@ Examples:
   ./install.sh --dry-run
   ./install.sh --yes --skip-github
   ./install.sh --only 90-verify
+  bloody-writer install --workspace ~/projects/example/bloody-writer.workspace.json
+  bloody-writer workspace help
 EOF
 }
 
@@ -96,6 +102,7 @@ bw_phase_function() {
 bw_install() {
   local from_phase=""
   local only_phase=""
+  local workspace_file=""
   export BW_SKIP_GITHUB=0
   export BW_SKIP_HOST_THEME=0
   export BW_SKIP_CODEX=0
@@ -110,6 +117,11 @@ bw_install() {
     --skip-github) BW_SKIP_GITHUB=1 ;;
     --skip-codex) BW_SKIP_CODEX=1 ;;
     --skip-codex-login) BW_SKIP_CODEX_LOGIN=1 ;;
+    -w | --workspace)
+      shift
+      (($#)) || bw_die "--workspace requires a JSON profile."
+      workspace_file="$1"
+      ;;
     --from)
       shift
       (($#)) || bw_die "--from requires a phase."
@@ -129,6 +141,10 @@ bw_install() {
     shift
   done
   export BW_ASSUME_YES BW_DRY_RUN BW_FORCE
+
+  if [[ -n $workspace_file ]]; then
+    bw_workspace_require_platform "$workspace_file"
+  fi
 
   if [[ $BW_PLATFORM == unsupported && $BW_TEST_MODE != 1 ]]; then
     bw_die "Unsupported platform. Use Arch Linux on Windows WSL 2 or the Termux app on Android."
@@ -235,6 +251,11 @@ bw_install() {
       bw_warn "$pending phase(s) remain pending. Run 'bloody-writer status' for details."
     fi
   fi
+
+  if [[ -n $workspace_file ]]; then
+    bw_workspace_validate_file "$workspace_file"
+    bw_workspace_apply_loaded
+  fi
 }
 
 bw_status() {
@@ -254,6 +275,10 @@ bw_status() {
   while IFS= read -r checkpoint; do
     printf 'Manual checkpoint: %s\n' "$(cat "$checkpoint")"
   done < <(find "$BW_STATE_DIR/manual" -maxdepth 1 -type f -print 2>/dev/null | LC_ALL=C sort)
+  if [[ $BW_PLATFORM == wsl && -f $BW_STATE_DIR/workspaces/active.json ]]; then
+    printf '\n'
+    bw_workspace_status_command
+  fi
 }
 
 bw_update() {
@@ -265,6 +290,10 @@ bw_update() {
     --dry-run) BW_DRY_RUN=1 ;;
     --yes) BW_ASSUME_YES=1 ;;
     --force | --skip-host-theme | --skip-github | --skip-codex | --skip-codex-login) ;;
+    -w | --workspace)
+      shift
+      (($#)) || bw_die "$argument requires a JSON profile."
+      ;;
     --from | --only)
       shift
       (($#)) || bw_die "$argument requires a phase."
@@ -301,6 +330,12 @@ bw_update() {
     bw_clear_phase "$phase"
   done
   bw_install "${arguments[@]}"
+  if [[ ! " ${arguments[*]} " =~ [[:space:]](-w|--workspace)[[:space:]] ]] &&
+    [[ $BW_PLATFORM == wsl && -f $BW_STATE_DIR/workspaces/active.json ]]; then
+    bw_note "The base update did not reapply the active workspace. Current workspace state:"
+    bw_workspace_status_command
+    bw_workspace_report_active_audit
+  fi
 }
 
 bw_checkout_status() {
@@ -489,6 +524,7 @@ doctor) exec "$BW_REPO_ROOT/scripts/doctor.sh" "$@" ;;
 backup) bw_backup ;;
 restore) bw_restore "$@" ;;
 remote) exec "$BW_REPO_ROOT/scripts/setup-remote.sh" "$@" ;;
+workspace) bw_workspace_command "$@" ;;
 reset-phase) bw_reset_phase_command "$@" ;;
 help | -h | --help) bw_usage ;;
 *) bw_die "Unknown command: $command_name" ;;

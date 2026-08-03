@@ -16,6 +16,7 @@ opens with `Space ?`.
 | Move between phone and PC | Termux on Android connects privately to tmux in Windows WSL | `wsl-writer` |
 | Recover setup state | Resumable phases, status, doctor, backups, restore | `bloody-writer status` |
 | Maintain your fork | Fast-forward updates, manifests, locked plugins, tests | `bloody-writer update` |
+| Recreate a project workstation | Approved WSL-only packages, guarded setup, verification, and resume | `bloody-writer install -w FILE` |
 
 ## What differs by platform
 
@@ -27,6 +28,7 @@ opens with `Space ?`.
 | Terminal styling | Separate Windows Terminal profile + user font | `~/.termux/colors.properties` + `font.ttf` |
 | Codex | Official CLI runs locally | Runs in WSL; Termux attaches over SSH/tmux |
 | Remote role | Tailscale SSH host | Tailscale Android client |
+| Project workspace profiles | Supported, Arch WSL 2 only | Blocked before mutation; use the project remotely in WSL |
 
 ## Install and maintain
 
@@ -42,6 +44,22 @@ opens with `Space ?`.
 | `bloody-writer backup` | Archive managed config without secrets |
 | `bloody-writer restore` | Restore a preserved pre-install configuration |
 | `bloody-writer reset-phase PHASE` | Reopen one phase deliberately |
+
+## Project workspace profiles (Arch WSL 2 only)
+
+| Command | Action |
+|---|---|
+| `bloody-writer workspace scan --project DIR --output FILE` | Write a deterministic candidate; never a ready-to-run approval |
+| `bloody-writer workspace validate FILE` | Check schema, Git tracking, sources, platform, paths, and review state |
+| `bloody-writer workspace audit FILE` | Compare the profile with the current WSL machine |
+| `bloody-writer workspace apply FILE --dry-run` | Preview the project layer without mutation |
+| `bloody-writer install --workspace FILE` | Complete the terminal base, then apply/resume the project layer |
+| `bloody-writer workspace status` | Show active manifest digest and four workspace phases |
+| `bloody-writer workspace resume --yes` | Continue the exact active profile generation |
+
+Profiles recreate installable development capability—not `.env`, SQLite data, credentials,
+private evidence, IDE state, caches, history, or machine identity. See
+[`WORKSPACE-PROFILES.md`](WORKSPACE-PROFILES.md) before approving one.
 
 ## Writer loop
 

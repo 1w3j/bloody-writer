@@ -1,7 +1,7 @@
 # Snapshot record
 
-Bloody Writer 0.2.0 was curated from the working Arch WSL environment and the original
-Termux/Android workflow on 2026-07-31.
+Bloody Writer 0.3.0 retains the working Arch WSL and original Termux/Android snapshot curated on
+2026-07-31, with the workspace-profile layer audited on 2026-08-04.
 This record describes the observed baseline; the installer follows current Arch repositories
 for rolling packages.
 
@@ -33,6 +33,7 @@ for rolling packages.
 | Package | Snapshot version |
 |---|---|
 | `bash-language-server` | `5.6.0` |
+| `neovim` | `5.4.0` |
 | `prettier` | `3.9.6` |
 | `pyright` | `1.1.411` |
 | `typescript` | `7.0.2` |
@@ -50,6 +51,8 @@ for rolling packages.
 - GitHub/SSH/keychain behavior recreated without copying credentials.
 - Native Termux on Android package/theme/clipboard/storage support and remote WSL session flow.
 - Verified JetBrainsMono Nerd Font Mono 3.4.0 for both Windows and Termux host layers.
+- Strict Arch WSL 2 project workspace profiles with candidate scanning, approval/trust,
+  digest-keyed resume state, guarded lifecycle commands, and private recovery copies.
 
 ## Historical decisions retained
 
@@ -64,6 +67,7 @@ for rolling packages.
 
 ## Intentionally excluded
 
-Business-specific web-server/PHP packages, project repositories, private keys, GitHub tokens,
+Business-specific web-server/PHP packages remain in project-owned profiles rather than the base
+snapshot. Project repositories, private keys, GitHub tokens,
 Codex authentication/state, shell history, local caches, generated dependencies, and personal
 absolute paths are outside the public terminal-configuration snapshot.
